@@ -17,6 +17,7 @@ async def main(
     early: bool = True,
     rerun: bool = False,
     email: Optional[str] = None,
+    assistant_id: Optional[str] = None,
 ):
     if email is None:
         email_address = get_config({"configurable": {}})["email"]
@@ -25,9 +26,7 @@ async def main(
     if url is None:
         client = get_client(url="http://127.0.0.1:2024")
     else:
-        client = get_client(
-            url=url
-        )
+        client = get_client(url=url)
 
     # TODO: This really should be async
     for email in fetch_group_emails(
@@ -35,6 +34,7 @@ async def main(
         minutes_since=minutes_since,
         gmail_token=gmail_token,
         gmail_secret=gmail_secret,
+        assistant_id=assistant_id,
     ):
         thread_id = str(
             uuid.UUID(hex=hashlib.md5(email["thread_id"].encode("UTF-8")).hexdigest())
@@ -114,6 +114,12 @@ if __name__ == "__main__":
         default=None,
         help="The email address to use",
     )
+    parser.add_argument(
+        "--assistant_id",
+        type=str,
+        default=None,
+        help="The assistant_id to use",
+    )
 
     args = parser.parse_args()
     asyncio.run(
@@ -125,5 +131,6 @@ if __name__ == "__main__":
             early=bool(args.early),
             rerun=bool(args.rerun),
             email=args.email,
+            assistant_id=args.assistant_id,
         )
     )

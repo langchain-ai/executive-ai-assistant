@@ -99,13 +99,18 @@ async def draft_response(state: State, config: RunnableConfig, store: BaseStore)
     if len(messages) > 0:
         tools.append(Ignore)
     prompt_config = get_config(config)
-    namespace = (config["configurable"].get("assistant_id", "default"),)
+    namespace = (
+        config["configurable"]["langgraph_auth_user_id"],
+        config["configurable"]["assistant_id"],
+    )
     key = "schedule_preferences"
     result = await store.aget(namespace, key)
     if result and "data" in result.value:
         schedule_preferences = result.value["data"]
     else:
-        await store.aput(namespace, key, {"data": prompt_config["schedule_preferences"]})
+        await store.aput(
+            namespace, key, {"data": prompt_config["schedule_preferences"]}
+        )
         schedule_preferences = prompt_config["schedule_preferences"]
     key = "random_preferences"
     result = await store.aget(namespace, key)
@@ -121,7 +126,9 @@ async def draft_response(state: State, config: RunnableConfig, store: BaseStore)
     if result and "data" in result.value:
         response_preferences = result.value["data"]
     else:
-        await store.aput(namespace, key, {"data": prompt_config["response_preferences"]})
+        await store.aput(
+            namespace, key, {"data": prompt_config["response_preferences"]}
+        )
         response_preferences = prompt_config["response_preferences"]
     _prompt = EMAIL_WRITING_INSTRUCTIONS.format(
         schedule_preferences=schedule_preferences,

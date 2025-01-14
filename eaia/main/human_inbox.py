@@ -60,14 +60,13 @@ def _generate_email_markdown(state: State):
 
 async def save_email(state: State, config, store: BaseStore, status: str):
     namespace = (
-        config["configurable"].get("assistant_id", "default"),
+        config["configurable"]["langgraph_auth_user_id"],
+        config["configurable"]["assistant_id"],
         "triage_examples",
     )
     key = state["email"]["id"]
     response = await store.aget(namespace, key)
-    print(f"This is response: {response}")
     if response is None:
-        print("foooo")
         data = {"input": state["email"], "triage": status}
         await store.aput(namespace, str(uuid.uuid4()), data)
 
@@ -114,7 +113,7 @@ async def send_message(state: State, config, store):
                 + state["messages"],
                 "feedback": f"{user} responded in this way: {response['args']}",
                 "prompt_types": ["background"],
-                "assistant_key": config["configurable"].get("assistant_id", "default"),
+                "assistant_key": config["configurable"]["assistant_id"],
             }
             await LGC.runs.create(None, "multi_reflection_graph", input=rewrite_state)
     elif response["type"] == "ignore":
@@ -180,7 +179,7 @@ async def send_email_draft(state: State, config, store):
                 + state["messages"],
                 "feedback": f"Error, {user} interrupted and gave this feedback: {response['args']}",
                 "prompt_types": ["tone", "email", "background", "calendar"],
-                "assistant_key": config["configurable"].get("assistant_id", "default"),
+                "assistant_key": config["configurable"]["assistant_id"],
             }
             await LGC.runs.create(None, "multi_reflection_graph", input=rewrite_state)
     elif response["type"] == "ignore":
@@ -222,12 +221,14 @@ async def send_email_draft(state: State, config, store):
                     },
                     {
                         "role": "assistant",
-                        "content": state["messages"][-1].tool_calls[0]["args"]["content"],
+                        "content": state["messages"][-1].tool_calls[0]["args"][
+                            "content"
+                        ],
                     },
                 ],
                 "feedback": f"A better response would have been: {corrected}",
                 "prompt_types": ["tone", "email", "background", "calendar"],
-                "assistant_key": config["configurable"].get("assistant_id", "default"),
+                "assistant_key": config["configurable"]["assistant_id"],
             }
             await LGC.runs.create(None, "multi_reflection_graph", input=rewrite_state)
     elif response["type"] == "accept":
@@ -275,7 +276,7 @@ async def notify(state: State, config, store):
                 + state["messages"],
                 "feedback": f"{user} gave these instructions: {response['args']}",
                 "prompt_types": ["email", "background", "calendar"],
-                "assistant_key": config["configurable"].get("assistant_id", "default"),
+                "assistant_key": config["configurable"]["assistant_id"],
             }
             await LGC.runs.create(None, "multi_reflection_graph", input=rewrite_state)
     elif response["type"] == "ignore":
@@ -341,7 +342,7 @@ async def send_cal_invite(state: State, config, store):
                 + state["messages"],
                 "feedback": f"{user} interrupted gave these instructions: {response['args']}",
                 "prompt_types": ["email", "background", "calendar"],
-                "assistant_key": config["configurable"].get("assistant_id", "default"),
+                "assistant_key": config["configurable"]["assistant_id"],
             }
             await LGC.runs.create(None, "multi_reflection_graph", input=rewrite_state)
     elif response["type"] == "ignore":
@@ -384,7 +385,7 @@ async def send_cal_invite(state: State, config, store):
                 + state["messages"],
                 "feedback": f"{user} interrupted gave these instructions: {response['args']}",
                 "prompt_types": ["email", "background", "calendar"],
-                "assistant_key": config["configurable"].get("assistant_id", "default"),
+                "assistant_key": config["configurable"]["assistant_id"],
             }
             await LGC.runs.create(None, "multi_reflection_graph", input=rewrite_state)
     elif response["type"] == "accept":

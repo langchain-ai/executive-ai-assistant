@@ -1,4 +1,5 @@
 """Set up a cron job that runs every 10 minutes to check for emails"""
+
 import argparse
 import asyncio
 from typing import Optional
@@ -12,11 +13,10 @@ async def main(
     if url is None:
         client = get_client(url="http://127.0.0.1:2024")
     else:
-        client = get_client(
-            url=url
-        )
-    await client.crons.create("cron", schedule="*/10 * * * *", input={"minutes_since": minutes_since})
-
+        client = get_client(url=url)
+    await client.crons.create(
+        "cron", schedule="*/10 * * * *", input={"minutes_since": minutes_since}
+    )
 
 
 if __name__ == "__main__":

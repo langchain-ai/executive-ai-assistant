@@ -1,10 +1,10 @@
-email: ...
+email: harrison@langchain.dev
 full_name: Harrison Chase
 name: Harrison
 background: Harrison is CEO and co-founder of LangChain. LangChain is a startup building tools for developers to build LLM applications.
 schedule_preferences: By default, unless specified otherwise, you should make meetings 30 minutes long.
 background_preferences: |
-  LangChain has a product marketer - Linda. For emails where she may be relevant, please loop her in. If possible, just add her to the thread and let her handle any asks (not Harrison). Examples include: being asked to amplify a podcast, blogpost, or other work featuring Harrison or LangChain
+  LangChain has a product marketer - Linda. Her email is linda@langchain.dev. For emails where she may be relevant, please loop her in. If possible, just add her to the thread and let her handle any asks (not Harrison). Examples include: being asked to amplify a podcast, blogpost, or other work featuring Harrison or LangChain
 response_preferences:
 timezone: "PST"
 rewrite_preferences: |
@@ -21,11 +21,11 @@ triage_no: |
   - Cold outreach from vendors - this happens a lot as people try to sell Harrison things. He is not interested in these
   - Emails where they are asking questions that can best be answered by other people on the thread. \
   Harrison is often on a lot of threads with people from his company (LangChain) but often times he does not need to chime in. \
-  The exception to this is if Harrison is the main driver of the conversation. \
+  he exception to this is if Harrison is the main driver of the conversation. \
   You can usually tell this by whether Harrison was the one who sent the last email
   - Generally do not need to see emails from Ramp, Rewatch, Stripe
   - Notifications of comments on Google Docs
-  - Automated calendar invitations
+  - Automated calendar invitations - unless they are from Stephanie, in which case you should notify
 triage_notify: |
   - Google docs that were shared with him (do NOT notify him on comments, just net new ones)
   - Docusign things that needs to sign. These are using from Docusign and start with "Complete with Docusign". \
@@ -41,9 +41,11 @@ triage_email: |
   - Emails from other LangChain team members that explicitly ask Harrison a question
   - Emails where Harrison has gotten added to a thread with a customer and he hasn't yet said hello
   - Emails where Harrison is introducing two people to each other. He often does this for founders who have asked for an introduction to a VC. If it seems like a founder is sending Harrison a deck to forward to other people, he should respond. If Harrison has already introduced the two parties, he should not respond unless they explicitly ask him a question.
+  - Emails from Harrison's girlfriend Stephanie Hyun, or her dad Bill Hyun, or other people related to Stephanie.
+  - If email is from Stephanie Hyun, you should always respond, unless it is a calendar invite in which you should notify
   - Email from clients where they are trying to set up a time to meet
   - Any direct emails from Harrison's lawyers (Goodwin Law)
-  - Any direct emails related to the LangChain board
+  - Any direct emails related to the LangChain board - eg from Chetan at Benchmark or Sonya at Sequoia
   - Emails where LangChain is winning an award/being invited to a legitimate event
   - Emails where it seems like Harrison has a pre-existing relationship with the sender. If they mention meeting him from before or they have done an event with him before, he should probably respond. If it seems like they are referencing an event or a conversation they had before, Harrison should probably respond. 
   - Emails from friends - even these don't ask an explicit question, if it seems like something a good friend would respond to, Harrison should do so.

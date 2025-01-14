@@ -1,22 +1,20 @@
-import logging
-from datetime import datetime, timedelta, time
-from pathlib import Path
-from typing import Iterable
-import pytz
-import os
-
-from dateutil import parser
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
 import base64
+import email.utils
+import logging
+from datetime import datetime, time, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import email.utils
+from pathlib import Path
+from typing import Iterable
 
-from langchain_core.tools import tool
+import langsmith as ls
+import pytz
+from dateutil import parser
+from googleapiclient.discovery import build
 from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain_core.tools import tool
+from langchain_core.runnables.config import RunnableConfig
+
 
 from eaia.schemas import EmailData
 
@@ -32,37 +30,25 @@ _SECRETS_PATH = str(_SECRETS_DIR / "secrets.json")
 _TOKEN_PATH = str(_SECRETS_DIR / "token.json")
 
 
-def get_credentials(
-    gmail_token: str | None = None, gmail_secret: str | None = None
-) -> Credentials:
-    creds = None
-    _SECRETS_DIR.mkdir(parents=True, exist_ok=True)
-    gmail_token = gmail_token or os.getenv("GMAIL_TOKEN")
-    if gmail_token:
-        with open(_TOKEN_PATH, "w") as token:
-            token.write(gmail_token)
-    gmail_secret = gmail_secret or os.getenv("GMAIL_SECRET")
-    if gmail_secret:
-        with open(_SECRETS_PATH, "w") as secret:
-            secret.write(gmail_secret)
-    if os.path.exists(_TOKEN_PATH):
-        creds = Credentials.from_authorized_user_file(_TOKEN_PATH)
+def get_credentials(assistant_id):
+    from arcadepy import Arcade
 
-    if not creds or not creds.valid or not creds.has_scopes(_SCOPES):
-        if (
-            creds
-            and creds.expired
-            and creds.refresh_token
-            and creds.has_scopes(_SCOPES)
-        ):
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(_SECRETS_PATH, _SCOPES)
-            creds = flow.run_local_server(port=_PORT)
-        with open(_TOKEN_PATH, "w") as token:
-            token.write(creds.to_json())
+    client = Arcade()
 
-    return creds
+    auth_response = client.auth.start(
+        user_id=assistant_id,
+        provider="google",
+        scopes=_SCOPES,
+    )
+
+    if auth_response.status != "completed":
+        raise ValueError
+
+    from google.oauth2.credentials import Credentials
+
+    # Wait for the authorization to complete
+    auth_response = client.auth.wait_for_completion(auth_response)
+    return Credentials(auth_response.context.token)
 
 
 def extract_message_part(msg):
@@ -138,8 +124,9 @@ def send_email(
     gmail_token: str | None = None,
     gmail_secret: str | None = None,
     addn_receipients=None,
+    assistant_id=None,
 ):
-    creds = get_credentials(gmail_token, gmail_secret)
+    creds = get_credentials(assistant_id)
 
     service = build("gmail", "v1", credentials=creds)
     message = service.users().messages().get(userId="me", id=email_id).execute()
@@ -170,108 +157,135 @@ def fetch_group_emails(
     minutes_since: int = 30,
     gmail_token: str | None = None,
     gmail_secret: str | None = None,
+    assistant_id=None,
 ) -> Iterable[EmailData]:
-    creds = get_credentials(gmail_token, gmail_secret)
-
-    service = build("gmail", "v1", credentials=creds)
+    creds = get_credentials(assistant_id)
     after = int((datetime.now() - timedelta(minutes=minutes_since)).timestamp())
+    with ls.trace(
+        "Fetching emails",
+        inputs={"to_email": to_email, "after": after},
+        metadata={"assistant_id": assistant_id},
+    ) as rt:
+        service = build("gmail", "v1", credentials=creds)
 
-    query = f"(to:{to_email} OR from:{to_email}) after:{after}"
-    messages = []
-    nextPageToken = None
-    # Fetch messages matching the query
-    while True:
-        results = (
-            service.users()
-            .messages()
-            .list(userId="me", q=query, pageToken=nextPageToken)
-            .execute()
-        )
-        if "messages" in results:
-            messages.extend(results["messages"])
-        nextPageToken = results.get("nextPageToken")
-        if not nextPageToken:
-            break
+        query = f"(to:{to_email} OR from:{to_email}) after:{after}"
+        messages = []
+        nextPageToken = None
+        # Fetch messages matching the query
+        while True:
+            results = (
+                service.users()
+                .messages()
+                .list(userId="me", q=query, pageToken=nextPageToken)
+                .execute()
+            )
+            if "messages" in results:
+                messages.extend(results["messages"])
+            nextPageToken = results.get("nextPageToken")
+            if not nextPageToken:
+                break
 
-    count = 0
-    for message in messages:
-        try:
-            msg = (
-                service.users().messages().get(userId="me", id=message["id"]).execute()
-            )
-            thread_id = msg["threadId"]
-            payload = msg["payload"]
-            headers = payload.get("headers")
-            # Get the thread details
-            thread = service.users().threads().get(userId="me", id=thread_id).execute()
-            messages_in_thread = thread["messages"]
-            # Check the last message in the thread
-            last_message = messages_in_thread[-1]
-            last_headers = last_message["payload"]["headers"]
-            from_header = next(
-                header["value"] for header in last_headers if header["name"] == "From"
-            )
-            last_from_header = next(
-                header["value"]
-                for header in last_message["payload"].get("headers")
-                if header["name"] == "From"
-            )
-            if to_email in last_from_header:
-                yield {
-                    "id": message["id"],
-                    "thread_id": message["threadId"],
-                    "user_respond": True,
-                }
-            # Check if the last message was from you and if the current message is the last in the thread
-            if to_email not in from_header and message["id"] == last_message["id"]:
-                subject = next(
-                    header["value"] for header in headers if header["name"] == "Subject"
+        count = 0
+        for message in messages:
+            try:
+                msg = (
+                    service.users()
+                    .messages()
+                    .get(userId="me", id=message["id"])
+                    .execute()
                 )
-                from_email = next(
-                    (header["value"] for header in headers if header["name"] == "From"),
-                    "",
-                ).strip()
-                _to_email = next(
-                    (header["value"] for header in headers if header["name"] == "To"),
-                    "",
-                ).strip()
-                if reply_to := next(
-                    (
+                thread_id = msg["threadId"]
+                payload = msg["payload"]
+                headers = payload.get("headers")
+                # Get the thread details
+                thread = (
+                    service.users().threads().get(userId="me", id=thread_id).execute()
+                )
+                messages_in_thread = thread["messages"]
+                # Check the last message in the thread
+                last_message = messages_in_thread[-1]
+                last_headers = last_message["payload"]["headers"]
+                from_header = next(
+                    header["value"]
+                    for header in last_headers
+                    if header["name"] == "From"
+                )
+                last_from_header = next(
+                    header["value"]
+                    for header in last_message["payload"].get("headers")
+                    if header["name"] == "From"
+                )
+                if to_email in last_from_header:
+                    yield {
+                        "id": message["id"],
+                        "thread_id": message["threadId"],
+                        "user_respond": True,
+                    }
+                # Check if the last message was from you and if the current message is the last in the thread
+                if to_email not in from_header and message["id"] == last_message["id"]:
+                    subject = next(
                         header["value"]
                         for header in headers
-                        if header["name"] == "Reply-To"
-                    ),
-                    "",
-                ).strip():
-                    from_email = reply_to
-                send_time = next(
-                    header["value"] for header in headers if header["name"] == "Date"
-                )
-                # Only process emails that are less than an hour old
-                parsed_time = parse_time(send_time)
-                body = extract_message_part(payload)
-                yield {
-                    "from_email": from_email,
-                    "to_email": _to_email,
-                    "subject": subject,
-                    "page_content": body,
-                    "id": message["id"],
-                    "thread_id": message["threadId"],
-                    "send_time": parsed_time.isoformat(),
-                }
-                count += 1
-        except Exception:
-            print(f"Failed on {message}")
+                        if header["name"] == "Subject"
+                    )
+                    from_email = next(
+                        (
+                            header["value"]
+                            for header in headers
+                            if header["name"] == "From"
+                        ),
+                        "",
+                    ).strip()
+                    _to_email = next(
+                        (
+                            header["value"]
+                            for header in headers
+                            if header["name"] == "To"
+                        ),
+                        "",
+                    ).strip()
+                    if reply_to := next(
+                        (
+                            header["value"]
+                            for header in headers
+                            if header["name"] == "Reply-To"
+                        ),
+                        "",
+                    ).strip():
+                        from_email = reply_to
+                    send_time = next(
+                        header["value"]
+                        for header in headers
+                        if header["name"] == "Date"
+                    )
+                    # Only process emails that are less than an hour old
+                    parsed_time = parse_time(send_time)
+                    body = extract_message_part(payload)
+                    yield {
+                        "from_email": from_email,
+                        "to_email": _to_email,
+                        "subject": subject,
+                        "page_content": body,
+                        "id": message["id"],
+                        "thread_id": message["threadId"],
+                        "send_time": parsed_time.isoformat(),
+                    }
+                    count += 1
+            except Exception as e:
+                rt.error = str(e)
+                print(f"Failed on {message}")
 
-    logger.info(f"Found {count} emails.")
+        rt.add_outputs({"count": count})
+        logger.info(f"Found {count} emails.")
 
 
 def mark_as_read(
     message_id,
     gmail_token: str | None = None,
     gmail_secret: str | None = None,
+    assistant_id=None,
 ):
-    creds = get_credentials(gmail_token, gmail_secret)
+    creds = get_credentials(assistant_id)
 
     service = build("gmail", "v1", credentials=creds)
     service.users().messages().modify(
@@ -286,7 +300,7 @@ class CalInput(BaseModel):
 
 
 @tool(args_schema=CalInput)
-def get_events_for_days(date_strs: list[str]):
+def get_events_for_days(date_strs: list[str], config: RunnableConfig):
     """
     Retrieves events for a list of days. If you want to check for multiple days, call this with multiple inputs.
 
@@ -298,7 +312,7 @@ def get_events_for_days(date_strs: list[str]):
     Returns: availability for those days.
     """
 
-    creds = get_credentials(None, None)
+    creds = get_credentials(config["configurable"]["assistant_id"])
     service = build("calendar", "v3", credentials=creds)
     results = ""
     for date_str in date_strs:
@@ -371,9 +385,15 @@ def print_events(events):
 
 
 def send_calendar_invite(
-    emails, title, start_time, end_time, email_address, timezone="PST"
+    emails,
+    title,
+    start_time,
+    end_time,
+    email_address,
+    timezone="PST",
+    assistant_id=None,
 ):
-    creds = get_credentials(None, None)
+    creds = get_credentials(assistant_id)
     service = build("calendar", "v3", credentials=creds)
 
     # Parse the start and end times

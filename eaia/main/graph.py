@@ -1,4 +1,5 @@
 """Overall agent."""
+
 import json
 from typing import TypedDict, Literal
 from langgraph.graph import END, StateGraph
@@ -123,6 +124,7 @@ def send_cal_invite_node(state, config):
             _args["start_time"],
             _args["end_time"],
             email,
+            assistant_id=config["configurable"]["assistant_id"],
         )
         message = "Sent calendar invite!"
     except Exception as e:
@@ -142,11 +144,14 @@ def send_email_node(state, config):
         _args["content"],
         email,
         addn_receipients=new_receipients,
+        assistant_id=config["configurable"]["assistant_id"],
     )
 
 
-def mark_as_read_node(state):
-    mark_as_read(state["email"]["id"])
+def mark_as_read_node(state, config):
+    mark_as_read(
+        state["email"]["id"], assistant_id=config["configurable"]["assistant_id"]
+    )
 
 
 def human_node(state: State):

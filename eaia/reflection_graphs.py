@@ -64,7 +64,11 @@ You should return the full prompt, so if there's anything from before that you w
 async def update_general(state: ReflectionState, config, store: BaseStore):
     reflection_model = ChatOpenAI(model="o1", disable_streaming=True)
     # reflection_model = ChatAnthropic(model="claude-3-5-sonnet-latest")
-    namespace = (state["assistant_key"],)
+    user_id = config["configurable"]["langgraph_auth_user_id"]
+    namespace = (
+        user_id,
+        state["assistant_key"],
+    )
     key = state["prompt_key"]
     result = await store.aget(namespace, key)
 
@@ -88,10 +92,7 @@ async def update_general(state: ReflectionState, config, store: BaseStore):
         state["instructions"],
     )
     if output["update_prompt"]:
-        await store.aput(
-            namespace, key, {"data": output["new_prompt"]}, index=False
-        )
-
+        await store.aput(namespace, key, {"data": output["new_prompt"]}, index=False)
 
 
 general_reflection_graph = StateGraph(ReflectionState)

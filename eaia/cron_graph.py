@@ -1,10 +1,14 @@
-from typing import TypedDict
-from eaia.gmail import fetch_group_emails
-from langgraph_sdk import get_client
-import httpx
-import uuid
 import hashlib
-from langgraph.graph import StateGraph, START, END
+import operator
+import uuid
+from typing import Annotated, TypedDict
+
+import httpx
+import langsmith as ls
+from langgraph.graph import END, START, StateGraph
+from langgraph_sdk import get_client
+
+from eaia.gmail import fetch_group_emails
 from eaia.main.config import get_config
 
 client = get_client()
@@ -12,40 +16,62 @@ client = get_client()
 
 class JobKickoff(TypedDict):
     minutes_since: int
+    assistant_id: str
+    count: Annotated[int, operator.add]
 
 
 async def main(state: JobKickoff, config):
     minutes_since: int = state["minutes_since"]
     email = get_config(config)["email"]
-
+    assistant_id = state["assistant_id"]
     # TODO: This really should be async
-    for email in fetch_group_emails(email, minutes_since=minutes_since):
+    count = 0
+    for email in fetch_group_emails(
+        email, minutes_since=minutes_since, assistant_id=assistant_id
+    ):
         thread_id = str(
             uuid.UUID(hex=hashlib.md5(email["thread_id"].encode("UTF-8")).hexdigest())
         )
-        try:
-            thread_info = await client.threads.get(thread_id)
-        except httpx.HTTPStatusError as e:
+        async with ls.trace(
+            "Schedule processing",
+            inputs={"thread_id": thread_id},
+            metadata={"assistant_id": assistant_id, "email": email},
+        ) as rt:
+            try:
+                thread_info = await client.threads.get(thread_id)
+            except httpx.HTTPStatusError as e:
+                if "user_respond" in email:
+                    rt.metadata["end_reason"] = "user_respond"
+                    continue
+                if e.response.status_code == 404:
+                    thread_info = await client.threads.create(
+                        thread_id=thread_id, if_exists="do_nothing"
+                    )
+                else:
+                    rt.metadata["end_reason"] = "unknown_error"
+                    rt.error = str(e)
+                    raise e
             if "user_respond" in email:
+                rt.metadata["end_reason"] = "user_respond"
+                await client.threads.update_state(thread_id, None, as_node="__end__")
                 continue
-            if e.response.status_code == 404:
-                thread_info = await client.threads.create(thread_id=thread_id)
-            else:
-                raise e
-        if "user_respond" in email:
-            await client.threads.update_state(thread_id, None, as_node="__end__")
-            continue
-        recent_email = thread_info["metadata"].get("email_id")
-        if recent_email == email["id"]:
-            break
-        await client.threads.update(thread_id, metadata={"email_id": email["id"]})
+            recent_email = thread_info["metadata"].get("email_id")
+            if recent_email == email["id"]:
+                rt.metadata["end_reason"] = "duplicate"
+                break
+            await client.threads.update(thread_id, metadata={"email_id": email["id"]})
+            rt.metadata["end_reason"] = "success"
+            rt.add_outputs({"email": email})
+            count += 1
+            await client.runs.create(
+                thread_id,
+                assistant_id,
+                input={"email": email},
+                multitask_strategy="rollback",
+                config={"configurable": {"email": email["to_email"]}},
+            )
 
-        await client.runs.create(
-            thread_id,
-            "main",
-            input={"email": email},
-            multitask_strategy="rollback",
-        )
+    return {"count": count}
 
 
 graph = StateGraph(JobKickoff)

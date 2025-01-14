@@ -35,7 +35,10 @@ async def rewrite(state: State, config, store):
     llm = ChatOpenAI(model=model, temperature=0)
     prev_message = state["messages"][-1]
     draft = prev_message.tool_calls[0]["args"]["content"]
-    namespace = (config["configurable"].get("assistant_id", "default"),)
+    namespace = (
+        config["configurable"]["langgraph_auth_user_id"],
+        config["configurable"]["assistant_id"],
+    )
     result = await store.aget(namespace, "rewrite_instructions")
     prompt_config = get_config(config)
     if result and "data" in result.value:
