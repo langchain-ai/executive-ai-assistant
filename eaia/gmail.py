@@ -25,6 +25,10 @@ _SCOPES = [
     "https://www.googleapis.com/auth/gmail.send",
     "https://www.googleapis.com/auth/gmail.readonly",
 ]
+_OLD_SCOPES = [
+    "https://www.googleapis.com/auth/gmail.modify",
+    "https://www.googleapis.com/auth/calendar",
+]
 _ROOT = Path(__file__).parent.absolute()
 _PORT = 54191
 _SECRETS_DIR = _ROOT / ".secrets"
@@ -37,14 +41,24 @@ def get_credentials(assistant_id):
 
     client = Arcade()
 
-    auth_response = client.auth.start(
-        user_id=assistant_id,
-        provider="google",
-        scopes=_SCOPES,
-    )
+    try:
+        auth_response = client.auth.start(
+            user_id=assistant_id,
+            provider="google",
+            scopes=_SCOPES,
+        )
 
-    if auth_response.status != "completed":
-        raise ValueError
+        if auth_response.status != "completed":
+            raise ValueError
+    except ValueError:
+        auth_response = client.auth.start(
+            user_id=assistant_id,
+            provider="google",
+            scopes=_OLD_SCOPES,
+        )
+
+        if auth_response.status != "completed":
+            raise ValueError
 
     from google.oauth2.credentials import Credentials
 
