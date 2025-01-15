@@ -304,9 +304,12 @@ def mark_as_read(
     creds = get_credentials(assistant_id)
 
     service = build("gmail", "v1", credentials=creds)
-    service.users().messages().modify(
-        userId="me", id=message_id, body={"removeLabelIds": ["UNREAD"]}
-    ).execute()
+    try:
+        service.users().messages().modify(
+            userId="me", id=message_id, body={"removeLabelIds": ["UNREAD"]}
+        ).execute()
+    except:
+        pass
 
 
 class CalInput(BaseModel):
