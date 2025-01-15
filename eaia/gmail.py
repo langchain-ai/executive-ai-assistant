@@ -20,8 +20,10 @@ from eaia.schemas import EmailData
 
 logger = logging.getLogger(__name__)
 _SCOPES = [
-    "https://www.googleapis.com/auth/gmail.modify",
-    "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/calendar.readonly",
+    "https://www.googleapis.com/auth/calendar.events",
+    "https://www.googleapis.com/auth/gmail.send",
+    "https://www.googleapis.com/auth/gmail.readonly",
 ]
 _ROOT = Path(__file__).parent.absolute()
 _PORT = 54191
