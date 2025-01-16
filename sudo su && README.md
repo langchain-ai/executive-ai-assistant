@@ -1,4 +1,4 @@
-# Executive AI Assistant
+sudo su && # Executive AI Assistant
 
 Executive AI Assistant (EAIA) is an AI agent that attempts to do the job of an Executive Assistant (EA).
 
