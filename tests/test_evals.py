@@ -30,21 +30,23 @@ def format_email(from_email, subject, page_content):
             "Daily backup succesful",
             """This is an automated notification to confirm that the daily backup process completed successfully at 03:00 UTC.
 
-No action is required."""
+    No action is required."""
         ),
         (
             "outreach@linkedin.com",
             "Harrison, add Isaac H. - Software Engineer",
             """Do you know Isaac?
 
-Request to connect with members you know and trust"""
+    Request to connect with members you know and trust"""
         )
     ]
 )
 async def test_triage_no(from_email, subject, page_content):
     email = format_email(from_email, subject, page_content)
+    t.log_inputs(email)
 
     result = await graph.nodes['triage_input'].ainvoke({"email": email, "messages": []}, {"configurable": {"__pregel_store": InMemoryStore()}})
+    t.log_outputs(result)
     assert result['triage'].response == "no"
 
 
@@ -57,26 +59,30 @@ async def test_triage_no(from_email, subject, page_content):
             "2024 AI Agent Report",
             """Dear Harrison,
 
-Just wanted to reach out to let you know that LangChain featured heavily in the AI Agents report just released by McKinsey. In the report, we discuss different orchestration frameworks and how LangGraphs state based approach compares to other popular frameworks. Here is a link to the report if you are interested: report-link.com/mckinsey-report
+    Just wanted to reach out to let you know that LangChain featured heavily in the AI Agents report just released by McKinsey. 
+    In the report, we discuss different orchestration frameworks and how LangGraphs state based approach compares to other popular frameworks. 
+    Here is a link to the report if you are interested: report-link.com/mckinsey-report
 
-Best,
-Mark"""
+    Best,
+    Mark"""
         ),
         (
             "drive-shares-dm-noreply@google.com",
             "Document shared with you: 'Financial Outlook 2025'",
             """Isaac H. has shared a document with you.
 
-Document: Financial Outlook 2025
+    Document: Financial Outlook 2025
 
-View document"""
+    View document"""
         )
     ]
 )
 async def test_triage_notify(from_email, subject, page_content):
     email = format_email(from_email, subject, page_content)
+    t.log_inputs(email)
 
     result = await graph.nodes['triage_input'].ainvoke({"email": email, "messages": []}, {"configurable": {"__pregel_store": InMemoryStore()}})
+    t.log_outputs(result)
     assert result['triage'].response == "notify"
 
 
@@ -89,27 +95,29 @@ async def test_triage_notify(from_email, subject, page_content):
             "Meeting with Harrison Tomorrow",
             """Hi Harrison,
 
-I've scheduled a meeting for you with John Smith from Startup Inc. tomorrow at 2 PM PST.
+    I've scheduled a meeting for you with John Smith from Startup Inc. tomorrow at 2 PM PST.
 
-Best regards,
-Executive Assistant"""
+    Best regards,
+    Executive Assistant"""
         ),
         (
             "founder@startup.com",
             "Requesting Intro to VC Partner",
             """Hi Harrison,
 
-As discussed, I'd love an introduction to Jane Doe at Venture Capital Partners. I've attached our pitch deck for your reference.
+    As discussed, I'd love an introduction to Jane Doe at Venture Capital Partners. I've attached our pitch deck for your reference.
 
-Thanks!
-Startup Founder"""
+    Thanks!
+    Startup Founder"""
         )
     ]
 )
 async def test_triage_respond(from_email, subject, page_content):
     email = format_email(from_email, subject, page_content)
+    t.log_inputs(email)
 
     result = await graph.nodes['triage_input'].ainvoke({"email": email, "messages": []}, {"configurable": {"__pregel_store": InMemoryStore()}})
+    t.log_outputs(result)
     assert result['triage'].response == "email"
 
 
@@ -139,6 +147,8 @@ async def test_time_proposal():
     t.log_inputs(time_input)
 
     res = await graph.nodes['draft_response'].ainvoke(time_input, config)
+    t.log_outputs(res)
+
     assert res['draft'].additional_kwargs['tool_calls'][0]['function']['name'] == "SendCalendarInvite"
 
     action = take_action(res)
@@ -208,18 +218,20 @@ async def test_rewrite_style():
         "args": {
             "content": """Dear Mr. Francisco,
 
-Thank you for sharing your insights regarding the email assistant. Your suggestions are duly noted. I concur that expanding support to additional email providers, configuring the assistant to utilize local models by default, and developing a dedicated front end are all worthwhile endeavors.
+    Thank you for sharing your insights regarding the email assistant. Your suggestions are duly noted. I concur that expanding support to additional email providers, configuring the assistant to utilize local models by default, and developing a dedicated front end are all worthwhile endeavors.
 
-These are valuable proposals, and I will be reviewing them further. Please advise if there are any further details or priorities you wish to emphasize.
+    These are valuable proposals, and I will be reviewing them further. Please advise if there are any further details or priorities you wish to emphasize.
 
-Sincerely,
-Harrison Chase""",
+    Sincerely,
+    Harrison Chase""",
             "new_recipients": []
         },
         "id": "0"
     }])]
 
     rewrite = await graph.nodes['rewrite'].ainvoke({"messages": messages, "email": rewrite_input["email"]}, config)
+    t.log_outputs(rewrite)
+
     llm_judge = ChatOpenAI(model="gpt-4o", temperature=0).with_structured_output(Faithfulness)
 
     messages = [
