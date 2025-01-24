@@ -7,10 +7,10 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-langgraph = "^0.2.66"
+langgraph = {extras = ["inmem"], version = "^0.2.66"}
 langgraph-checkpoint = "^2.0.0"
 langchain = "^0.3.9"
-langchain-openai = "^0.2"
+langchain-openai = "^0.3.2"
 langchain-anthropic = "^0.3"
 google-api-python-client = "^2.128.0"
 google-auth-oauthlib = "^1.2.0"
