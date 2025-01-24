@@ -75,7 +75,7 @@ async def save_email(state: State, config, store: BaseStore, status: str):
 async def send_message(state: State, config, store):
     prompt_config = get_config(config)
     memory = prompt_config["memory"]
-    user = prompt_config['name']
+    user = prompt_config["name"]
     tool_call = state["messages"][-1].tool_calls[0]
     request: HumanInterrupt = {
         "action_request": {"action": tool_call["name"], "args": tool_call["args"]},
@@ -112,7 +112,7 @@ async def send_message(state: State, config, store):
                 ]
                 + state["messages"],
                 "feedback": f"{user} responded in this way: {response['args']}",
-                "prompt_types": ["background"],
+                "prompt_keys": ["background_preferences"],
                 "assistant_key": config["configurable"]["assistant_id"],
             }
             await LGC.runs.create(None, "multi_reflection_graph", input=rewrite_state)
@@ -141,7 +141,7 @@ async def send_message(state: State, config, store):
 async def send_email_draft(state: State, config, store):
     prompt_config = get_config(config)
     memory = prompt_config["memory"]
-    user = prompt_config['name']
+    user = prompt_config["name"]
     tool_call = state["messages"][-1].tool_calls[0]
     request: HumanInterrupt = {
         "action_request": {"action": tool_call["name"], "args": tool_call["args"]},
@@ -178,7 +178,12 @@ async def send_email_draft(state: State, config, store):
                 ]
                 + state["messages"],
                 "feedback": f"Error, {user} interrupted and gave this feedback: {response['args']}",
-                "prompt_types": ["tone", "email", "background", "calendar"],
+                "prompt_keys": [
+                    "rewrite_instructions",
+                    "response_preferences",
+                    "background_preferences",
+                    "schedule_preferences",
+                ],
                 "assistant_key": config["configurable"]["assistant_id"],
             }
             await LGC.runs.create(None, "multi_reflection_graph", input=rewrite_state)
@@ -227,7 +232,12 @@ async def send_email_draft(state: State, config, store):
                     },
                 ],
                 "feedback": f"A better response would have been: {corrected}",
-                "prompt_types": ["tone", "email", "background", "calendar"],
+                "prompt_keys": [
+                    "rewrite_instructions",
+                    "response_preferences",
+                    "background_preferences",
+                    "schedule_preferences",
+                ],
                 "assistant_key": config["configurable"]["assistant_id"],
             }
             await LGC.runs.create(None, "multi_reflection_graph", input=rewrite_state)
@@ -244,7 +254,7 @@ async def send_email_draft(state: State, config, store):
 async def notify(state: State, config, store):
     prompt_config = get_config(config)
     memory = prompt_config["memory"]
-    user = prompt_config['name']
+    user = prompt_config["name"]
     request: HumanInterrupt = {
         "action_request": {"action": "Notify", "args": {}},
         "config": {
@@ -275,7 +285,11 @@ async def notify(state: State, config, store):
                 ]
                 + state["messages"],
                 "feedback": f"{user} gave these instructions: {response['args']}",
-                "prompt_types": ["email", "background", "calendar"],
+                "prompt_keys": [
+                    "response_preferences",
+                    "background_preferences",
+                    "schedule_preferences",
+                ],
                 "assistant_key": config["configurable"]["assistant_id"],
             }
             await LGC.runs.create(None, "multi_reflection_graph", input=rewrite_state)
@@ -304,7 +318,7 @@ async def notify(state: State, config, store):
 async def send_cal_invite(state: State, config, store):
     prompt_config = get_config(config)
     memory = prompt_config["memory"]
-    user = prompt_config['name']
+    user = prompt_config["name"]
     tool_call = state["messages"][-1].tool_calls[0]
     request: HumanInterrupt = {
         "action_request": {"action": tool_call["name"], "args": tool_call["args"]},
@@ -341,7 +355,11 @@ async def send_cal_invite(state: State, config, store):
                 ]
                 + state["messages"],
                 "feedback": f"{user} interrupted gave these instructions: {response['args']}",
-                "prompt_types": ["email", "background", "calendar"],
+                "prompt_keys": [
+                    "response_preferences",
+                    "background_preferences",
+                    "schedule_preferences",
+                ],
                 "assistant_key": config["configurable"]["assistant_id"],
             }
             await LGC.runs.create(None, "multi_reflection_graph", input=rewrite_state)
@@ -384,7 +402,11 @@ async def send_cal_invite(state: State, config, store):
                 ]
                 + state["messages"],
                 "feedback": f"{user} interrupted gave these instructions: {response['args']}",
-                "prompt_types": ["email", "background", "calendar"],
+                "prompt_keys": [
+                    "response_preferences",
+                    "background_preferences",
+                    "schedule_preferences",
+                ],
                 "assistant_key": config["configurable"]["assistant_id"],
             }
             await LGC.runs.create(None, "multi_reflection_graph", input=rewrite_state)

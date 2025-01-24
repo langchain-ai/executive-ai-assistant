@@ -8,11 +8,12 @@ from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 
 from eaia.gmail import get_events_for_days
+from eaia.main.prompt_utils import p
 from eaia.schemas import State
 
 from eaia.main.config import get_config
 
-meeting_prompts = """You are {full_name}'s executive assistant. You are a top-notch executive assistant who cares about {name} performing as well as possible.
+meeting_prompts = p("""You are {full_name}'s executive assistant. You are a top-notch executive assistant who cares about {name} performing as well as possible.
 
 The below email thread has been flagged as requesting time to meet. Your SOLE purpose is to survey {name}'s calendar and schedule meetings for {name}.
 
@@ -60,7 +61,7 @@ Here is the email thread:
 From: {author}
 Subject: {subject}
 
-{email_thread}"""
+{email_thread}""")
 
 
 async def find_meeting_time(state: State, config: RunnableConfig):

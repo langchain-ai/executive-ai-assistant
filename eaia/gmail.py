@@ -10,13 +10,11 @@ from typing import Iterable
 import langsmith as ls
 import pytz
 from dateutil import parser
+from eaia.schemas import EmailData
 from googleapiclient.discovery import build
 from langchain_core.pydantic_v1 import BaseModel, Field
-from langchain_core.tools import tool
 from langchain_core.runnables.config import RunnableConfig
-
-
-from eaia.schemas import EmailData
+from langchain_core.tools import tool
 
 logger = logging.getLogger(__name__)
 _SCOPES = [
@@ -308,7 +306,7 @@ def mark_as_read(
         service.users().messages().modify(
             userId="me", id=message_id, body={"removeLabelIds": ["UNREAD"]}
         ).execute()
-    except:
+    except Exception:
         pass
 
 

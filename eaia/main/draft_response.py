@@ -2,8 +2,7 @@
 
 from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
-from langgraph.store.base import BaseStore
-
+from eaia.agent_registry import registry
 from eaia.schemas import (
     State,
     NewEmailDraft,
@@ -69,7 +68,7 @@ Note that you should only call this if working to schedule a meeting - if a meet
 
 # Background information: information you may find helpful when responding to emails or deciding what to do.
 
-{random_preferences}"""
+{background_preferences}"""
 draft_prompt = """{instructions}
 
 Remember to call a tool correctly! Use the specified names exactly - not add `functions::` to the start. Pass all required arguments.
@@ -79,7 +78,14 @@ Here is the email thread. Note that this is the full email thread. Pay special a
 {email}"""
 
 
-async def draft_response(state: State, config: RunnableConfig, store: BaseStore):
+@registry.with_prompts(
+    (
+        "background_preferences",
+        "response_preferences",
+        "schedule_preferences",
+    )
+)
+async def draft_response(state: State, config: RunnableConfig):
     """Write an email to a customer."""
     model = config["configurable"].get("model", "gpt-4o")
     llm = ChatOpenAI(
@@ -99,41 +105,11 @@ async def draft_response(state: State, config: RunnableConfig, store: BaseStore)
     if len(messages) > 0:
         tools.append(Ignore)
     prompt_config = get_config(config)
-    namespace = (
-        config["configurable"]["langgraph_auth_user_id"],
-        config["configurable"]["assistant_id"],
-    )
-    key = "schedule_preferences"
-    result = await store.aget(namespace, key)
-    if result and "data" in result.value:
-        schedule_preferences = result.value["data"]
-    else:
-        await store.aput(
-            namespace, key, {"data": prompt_config["schedule_preferences"]}
-        )
-        schedule_preferences = prompt_config["schedule_preferences"]
-    key = "random_preferences"
-    result = await store.aget(namespace, key)
-    if result and "data" in result.value:
-        random_preferences = result.value["data"]
-    else:
-        await store.aput(
-            namespace, key, {"data": prompt_config["background_preferences"]}
-        )
-        random_preferences = prompt_config["background_preferences"]
-    key = "response_preferences"
-    result = await store.aget(namespace, key)
-    if result and "data" in result.value:
-        response_preferences = result.value["data"]
-    else:
-        await store.aput(
-            namespace, key, {"data": prompt_config["response_preferences"]}
-        )
-        response_preferences = prompt_config["response_preferences"]
+    prompts = registry.prompts
     _prompt = EMAIL_WRITING_INSTRUCTIONS.format(
-        schedule_preferences=schedule_preferences,
-        random_preferences=random_preferences,
-        response_preferences=response_preferences,
+        schedule_preferences=prompts["schedule_preferences"].value,
+        background_preferences=prompts["background_preferences"].value,
+        response_preferences=prompts["response_preferences"].value,
         name=prompt_config["name"],
         full_name=prompt_config["full_name"],
         background=prompt_config["background"],

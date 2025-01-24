@@ -4,7 +4,7 @@ from langchain_openai import ChatOpenAI
 
 from eaia.schemas import State, ReWriteEmail
 
-from eaia.main.config import get_config
+from eaia.agent_registry import registry
 
 
 rewrite_prompt = """You job is to rewrite an email draft to sound more like {name}.
@@ -30,34 +30,27 @@ Subject: {subject}
 {email_thread}"""
 
 
+@registry.with_prompts(
+    [
+        "rewrite_instructions",
+    ]
+)
 async def rewrite(state: State, config, store):
     model = config["configurable"].get("model", "gpt-4o")
     llm = ChatOpenAI(model=model, temperature=0)
     prev_message = state["messages"][-1]
     draft = prev_message.tool_calls[0]["args"]["content"]
-    namespace = (
-        config["configurable"]["langgraph_auth_user_id"],
-        config["configurable"]["assistant_id"],
+    rewrite_instructions = next(
+        p for p in registry.prompts if p.key == "rewrite_instructions"
     )
-    result = await store.aget(namespace, "rewrite_instructions")
-    prompt_config = get_config(config)
-    if result and "data" in result.value:
-        _prompt = result.value["data"]
-    else:
-        await store.aput(
-            namespace,
-            "rewrite_instructions",
-            {"data": prompt_config["rewrite_preferences"]},
-        )
-        _prompt = prompt_config["rewrite_preferences"]
     input_message = rewrite_prompt.format(
         email_thread=state["email"]["page_content"],
         author=state["email"]["from_email"],
         subject=state["email"]["subject"],
         to=state["email"]["to_email"],
         draft=draft,
-        instructions=_prompt,
-        name=prompt_config["name"],
+        instructions=rewrite_instructions.value,
+        name=rewrite_instructions.name,
     )
     model = llm.with_structured_output(ReWriteEmail).bind(
         tool_choice={"type": "function", "function": {"name": "ReWriteEmail"}}

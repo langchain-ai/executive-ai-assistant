@@ -26,7 +26,7 @@ async def main():
     )
     try:
         await client.threads.delete(thread_id)
-    except:
+    except Exception:
         pass
     await client.threads.create(thread_id=thread_id)
     await client.runs.create(
