@@ -29,7 +29,6 @@ async def main(
             url=url
         )
 
-    # TODO: This really should be async
     async for email in fetch_group_emails(
         email_address,
         minutes_since=minutes_since,
