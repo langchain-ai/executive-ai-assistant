@@ -30,7 +30,7 @@ async def main(
         )
 
     # TODO: This really should be async
-    for email in fetch_group_emails(
+    async for email in fetch_group_emails(
         email_address,
         minutes_since=minutes_since,
         gmail_token=gmail_token,

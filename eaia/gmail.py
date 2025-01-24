@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta, time
 from pathlib import Path
-from typing import Iterable
+from typing import AsyncIterable
 import pytz
 import os
 
@@ -10,6 +10,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+import asyncio
 import base64
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -165,12 +166,12 @@ def send_email(
     send_message(service, "me", response_message)
 
 
-def fetch_group_emails(
+async def fetch_group_emails(
     to_email,
     minutes_since: int = 30,
     gmail_token: str | None = None,
     gmail_secret: str | None = None,
-) -> Iterable[EmailData]:
+) -> AsyncIterable[EmailData]:
     creds = get_credentials(gmail_token, gmail_secret)
 
     service = build("gmail", "v1", credentials=creds)
@@ -181,11 +182,12 @@ def fetch_group_emails(
     nextPageToken = None
     # Fetch messages matching the query
     while True:
-        results = (
-            service.users()
-            .messages()
-            .list(userId="me", q=query, pageToken=nextPageToken)
-            .execute()
+        loop = asyncio.get_running_loop()
+        results = await loop.run_in_executor(
+            None,
+            lambda: service.users().messages().list(
+                userId="me", q=query, pageToken=nextPageToken
+            ).execute()
         )
         if "messages" in results:
             messages.extend(results["messages"])
@@ -196,14 +198,22 @@ def fetch_group_emails(
     count = 0
     for message in messages:
         try:
-            msg = (
-                service.users().messages().get(userId="me", id=message["id"]).execute()
+            msg = await loop.run_in_executor(
+                None,
+                lambda: service.users().messages().get(
+                    userId="me", id=message["id"]
+                ).execute()
             )
             thread_id = msg["threadId"]
             payload = msg["payload"]
             headers = payload.get("headers")
             # Get the thread details
-            thread = service.users().threads().get(userId="me", id=thread_id).execute()
+            thread = await loop.run_in_executor(
+                None,
+                lambda: service.users().threads().get(
+                    userId="me", id=thread_id
+                ).execute()
+            )
             messages_in_thread = thread["messages"]
             # Check the last message in the thread
             last_message = messages_in_thread[-1]
