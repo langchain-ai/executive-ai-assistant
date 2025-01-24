@@ -91,14 +91,14 @@ async def test_triage_notify(from_email, subject, page_content):
     "from_email, subject, page_content",
     [
         (
-            "assistant@company.com",
-            "Meeting with Harrison Tomorrow",
+            "Isaac <isaac@goodwinlaw.dev>",
+            "Goodwin Law",
             """Hi Harrison,
 
-    I've scheduled a meeting for you with John Smith from Startup Inc. tomorrow at 2 PM PST.
+    Isaac from Goodwin Law here. We need to discuss patents for next quarter - when are you free?
 
-    Best regards,
-    Executive Assistant"""
+    Best,
+    Isaac"""
         ),
         (
             "founder@startup.com",
@@ -121,13 +121,14 @@ async def test_triage_respond(from_email, subject, page_content):
     assert result['triage'].response == "email"
 
 
+
 time_input = {
   "email": {
     "id": "943e07b28c61f5da",
     "thread_id": "b26f4d381059e7ca",
     "from_email": "Isaac <isaac@langchain.dev>",
     "subject": "Follow up for meeting",
-    "page_content": "Hey Harrison,\n\nHope things are well! When we met last week we discussed meeting at 10am tuesday, if that still works for you feel free to send over a calendar invite - if not, we can reschedule for another time.\n\nIsaac",
+    "page_content": "Hey Harrison,\n\nHope things are well! When we met last week we discussed meeting at 10am tuesday, I confirmed with your scheduler that it still works for you so feel free to send over a calendar invite - if not, we can reschedule for another time.\n\nIsaac",
     "send_time": "2025-01-17T14:27:06-08:00",
     "to_email": "Harrison Chase <harrison@langchain.dev>"
   },
@@ -180,7 +181,8 @@ rewrite_input = {
 
     wanted to reach out to ask about next steps for the email assistant
 
-    here are some rough notes off the top of my head
+    here are the things we agreed upon yesterday, and I was going to start on today
+    just want to confirm I should be working on them
 
     - add more email providers
     - make it run with local models by default
@@ -200,7 +202,7 @@ rewrite_input = {
 
 class Faithfulness(TypedDict):
     reasoning: Annotated[str, ..., "The reasoning behind the faithfulness score."]
-    faithfulness: Annotated[str, ..., "A number from 0 to 1, where 0 is no faithfulness and 1 is perfect faithfulness to the instructions."]
+    faithfulness: Annotated[float, ..., "A float from 0 to 1, where 0 is no faithfulness and 1 is perfect faithfulness to the instructions."]
 
 @pytest.mark.langsmith
 async def test_rewrite_style():
