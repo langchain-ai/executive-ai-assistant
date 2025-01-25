@@ -36,7 +36,6 @@ async def search_memories(messages: list, *, model: str = "openai:gpt-4o-mini"):
     searcher = create_memory_searcher(
         model,
         namespace_prefix=(
-            "{langgraph_auth_user_id}",
             "{assistant_key}",
             "semantic",
         ),

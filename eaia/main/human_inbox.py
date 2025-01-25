@@ -66,7 +66,6 @@ def _generate_email_markdown(state: State):
 
 async def save_email(state: State, config, store: BaseStore, status: str):
     namespace = (
-        config["configurable"]["langgraph_auth_user_id"],
         config["configurable"]["assistant_id"],
         "triage_examples",
     )

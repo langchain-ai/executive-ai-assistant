@@ -97,7 +97,6 @@ class Registry:
                 store = get_store()
                 configurable = get_config().get("configurable", {})
                 namespace = (
-                    configurable["langgraph_auth_user_id"],
                     configurable["assistant_id"],
                 )
                 results = await asyncio.gather(

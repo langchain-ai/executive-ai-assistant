@@ -70,9 +70,7 @@ The agent you are managing is called \"{prompt_name}\" and has the following ins
 async def multi_reflection_node(state: MultiMemoryInput, store: BaseStore):
     assistant_key = state.get("assistant_key") or "default"
     configurable = get_config().get("configurable", {})
-    user_id = configurable["langgraph_auth_user_id"]
     namespace = (
-        user_id,
         assistant_key,
     )
     prompt_keys = state.get("prompt_keys", [])

@@ -31,7 +31,6 @@ def format_similar_examples_store(examples):
 
 async def get_few_shot_examples(email: EmailData, store: BaseStore, config):
     namespace = (
-        config["configurable"]["langgraph_auth_user_id"],
         config["configurable"]["assistant_id"],
         "triage_examples",
     )
