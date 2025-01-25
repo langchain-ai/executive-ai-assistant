@@ -1,5 +1,4 @@
 from typing import NamedTuple, Callable, TypeVar, Any, Sequence
-from typing_extensions import TypedDict
 import functools
 from contextvars import ContextVar
 from langgraph.utils.config import get_store, get_config
@@ -22,13 +21,6 @@ class ConfiguredPrompt(NamedTuple):
     value: str
 
 
-class ConfigurablePromptLike(TypedDict):
-    name: str
-    key: str
-    when_to_update: str
-    instructions: str
-
-
 _used_prompts: ContextVar[dict[str, ConfiguredPrompt] | None] = ContextVar(
     "used_prompts", default=None
 )
@@ -41,7 +33,7 @@ class Registry:
 
     def __init__(
         self,
-        prompts: Sequence[ConfigurablePrompt | ConfigurablePromptLike] | None = None,
+        prompts: Sequence[ConfigurablePrompt] | None = None,
     ) -> None:
         self.registered: dict[str, ConfigurablePrompt] = {}
         if prompts is not None:
@@ -49,11 +41,7 @@ class Registry:
 
     def register(
         self,
-        prompts: (
-            ConfigurablePrompt
-            | ConfigurablePromptLike
-            | Sequence[ConfigurablePrompt | ConfigurablePromptLike]
-        ),
+        prompts: ConfigurablePrompt | Sequence[ConfigurablePrompt],
     ) -> list[str]:
         keys = []
         if isinstance(prompts, dict | ConfigurablePrompt):
@@ -73,10 +61,8 @@ class Registry:
         self,
         prompts: (
             str
-
             | ConfigurablePrompt
-            | ConfigurablePromptLike
-            | Sequence[ConfigurablePrompt | ConfigurablePromptLike | str]
+            | Sequence[ConfigurablePrompt | str]
         ),
         /,
     ) -> Callable[[F], F]:
