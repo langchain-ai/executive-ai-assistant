@@ -61,7 +61,7 @@ async def triage_input(state: State, config: RunnableConfig, store: BaseStore):
         triage_email=prompt_config["triage_email"],
         triage_notify=prompt_config["triage_notify"],
     )
-    model = llm.with_structured_output(RespondTo)
+    model = llm.with_structured_output(RespondTo, method="function_calling")
     response = await model.ainvoke(input_message)
     if len(state["messages"]) > 0:
         delete_messages = [RemoveMessage(id=m.id) for m in state["messages"]]
