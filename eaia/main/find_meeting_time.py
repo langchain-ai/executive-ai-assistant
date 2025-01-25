@@ -8,7 +8,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 
 from eaia.gmail import get_events_for_days
-from eaia.main.prompt_utils import p
+from eaia.main.utils import p
 from eaia.schemas import State
 
 from eaia.main.config import get_config

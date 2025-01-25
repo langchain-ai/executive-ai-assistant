@@ -4,7 +4,8 @@ from langchain_openai import ChatOpenAI
 
 from eaia.schemas import State, ReWriteEmail
 
-from eaia.agent_registry import registry
+from eaia.prompt_registry import registry, REWRITE_PROMPT
+from langchain_core.runnables import RunnableConfig
 
 
 rewrite_prompt = """You job is to rewrite an email draft to sound more like {name}.
@@ -32,25 +33,22 @@ Subject: {subject}
 
 @registry.with_prompts(
     [
-        "rewrite_instructions",
+        REWRITE_PROMPT,
     ]
 )
-async def rewrite(state: State, config, store):
+async def rewrite(state: State, config: RunnableConfig):
     model = config["configurable"].get("model", "gpt-4o")
     llm = ChatOpenAI(model=model, temperature=0)
     prev_message = state["messages"][-1]
     draft = prev_message.tool_calls[0]["args"]["content"]
-    rewrite_instructions = next(
-        p for p in registry.prompts if p.key == "rewrite_instructions"
-    )
     input_message = rewrite_prompt.format(
         email_thread=state["email"]["page_content"],
         author=state["email"]["from_email"],
         subject=state["email"]["subject"],
         to=state["email"]["to_email"],
         draft=draft,
-        instructions=rewrite_instructions.value,
-        name=rewrite_instructions.name,
+        instructions=registry.prompts[REWRITE_PROMPT.key].value,
+        name=config["configurable"]["name"],
     )
     model = llm.with_structured_output(ReWriteEmail).bind(
         tool_choice={"type": "function", "function": {"name": "ReWriteEmail"}}

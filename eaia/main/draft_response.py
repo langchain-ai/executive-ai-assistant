@@ -2,7 +2,12 @@
 
 from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
-from eaia.agent_registry import registry
+from eaia.prompt_registry import (
+    registry,
+    BACKGROUND_PROMPT,
+    CALENDAR_PROMPT,
+    RESPONSE_PROMPT,
+)
 from eaia.schemas import (
     State,
     NewEmailDraft,
@@ -14,10 +19,17 @@ from eaia.schemas import (
     email_template,
 )
 from eaia.main.config import get_config
+from eaia.main.utils import p, search_memories
 
-EMAIL_WRITING_INSTRUCTIONS = """You are {full_name}'s executive assistant. You are a top-notch executive assistant who cares about {name} performing as well as possible.
+EMAIL_WRITING_INSTRUCTIONS = p(
+    """You are {full_name}'s executive assistant. You are a top-notch executive assistant who cares about {name} performing as well as possible.
 
 {background}
+
+## Memories
+<memories>
+{memories}
+</memories>
 
 {name} gets lots of emails. This has been determined to be an email that is worth {name} responding to.
 
@@ -68,26 +80,27 @@ Note that you should only call this if working to schedule a meeting - if a meet
 
 # Background information: information you may find helpful when responding to emails or deciding what to do.
 
-{background_preferences}"""
-draft_prompt = """{instructions}
+{background_preferences}
 
 Remember to call a tool correctly! Use the specified names exactly - not add `functions::` to the start. Pass all required arguments.
 
 Here is the email thread. Note that this is the full email thread. Pay special attention to the most recent email.
 
 {email}"""
+)
 
 
 @registry.with_prompts(
     (
-        "background_preferences",
-        "response_preferences",
-        "schedule_preferences",
+        BACKGROUND_PROMPT,
+        RESPONSE_PROMPT,
+        CALENDAR_PROMPT,
     )
 )
 async def draft_response(state: State, config: RunnableConfig):
     """Write an email to a customer."""
     model = config["configurable"].get("model", "gpt-4o")
+
     llm = ChatOpenAI(
         model=model,
         temperature=0,
@@ -106,16 +119,15 @@ async def draft_response(state: State, config: RunnableConfig):
         tools.append(Ignore)
     prompt_config = get_config(config)
     prompts = registry.prompts
-    _prompt = EMAIL_WRITING_INSTRUCTIONS.format(
-        schedule_preferences=prompts["schedule_preferences"].value,
-        background_preferences=prompts["background_preferences"].value,
-        response_preferences=prompts["response_preferences"].value,
+    memories = await search_memories([{"role": "user", "content": str(state["email"])}])
+    input_message = EMAIL_WRITING_INSTRUCTIONS.format(
+        schedule_preferences=prompts[CALENDAR_PROMPT.key].value,
+        background_preferences=prompts[BACKGROUND_PROMPT.key].value,
+        response_preferences=prompts[RESPONSE_PROMPT.key].value,
+        memories=memories,
         name=prompt_config["name"],
         full_name=prompt_config["full_name"],
         background=prompt_config["background"],
-    )
-    input_message = draft_prompt.format(
-        instructions=_prompt,
         email=email_template.format(
             email_thread=state["email"]["page_content"],
             author=state["email"]["from_email"],
@@ -123,7 +135,6 @@ async def draft_response(state: State, config: RunnableConfig):
             to=state["email"].get("to_email", ""),
         ),
     )
-
     model = llm.bind_tools(tools)
     messages = [{"role": "user", "content": input_message}] + messages
     i = 0

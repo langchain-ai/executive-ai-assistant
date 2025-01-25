@@ -1,4 +1,5 @@
 from langsmith import trace
+from langmem import create_memory_searcher
 
 
 class p(str):
@@ -29,3 +30,16 @@ class p(str):
 
     def __radd__(self, other) -> "p":
         return p(str(other) + self.tmpl)
+
+
+async def search_memories(messages: list, *, model: str = "openai:gpt-4o-mini"):
+    searcher = create_memory_searcher(
+        model,
+        namespace_prefix=(
+            "{langgraph_auth_user_id}",
+            "{assistant_key}",
+            "semantic",
+        ),
+    )
+    memory_items = await searcher.ainvoke({"messages": messages})
+    return "\n".join([mem.value["content"] for mem in memory_items])

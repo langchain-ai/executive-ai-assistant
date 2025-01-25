@@ -12,9 +12,10 @@ import pytz
 from dateutil import parser
 from eaia.schemas import EmailData
 from googleapiclient.discovery import build
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 from langchain_core.runnables.config import RunnableConfig
 from langchain_core.tools import tool
+import webbrowser
 
 logger = logging.getLogger(__name__)
 _SCOPES = [
@@ -34,7 +35,7 @@ _SECRETS_PATH = str(_SECRETS_DIR / "secrets.json")
 _TOKEN_PATH = str(_SECRETS_DIR / "token.json")
 
 
-def get_credentials(assistant_id):
+def get_credentials(assistant_id, interactive: bool = False):
     from arcadepy import Arcade
 
     client = Arcade()
@@ -47,8 +48,13 @@ def get_credentials(assistant_id):
         )
 
         if auth_response.status != "completed":
-            raise ValueError
-    except ValueError:
+            if interactive:
+                print(f"Authorization URL: {auth_response.url}")
+                webbrowser.open(str(auth_response.url))
+                auth_response = client.auth.wait_for_completion(auth_response)
+            else:
+                raise ValueError(f"Authorization failed: {auth_response}")
+    except ValueError as e:
         auth_response = client.auth.start(
             user_id=assistant_id,
             provider="google",
@@ -56,7 +62,7 @@ def get_credentials(assistant_id):
         )
 
         if auth_response.status != "completed":
-            raise ValueError
+            raise ValueError(f"Authorization failed: {auth_response.status}") from e
 
     from google.oauth2.credentials import Credentials
 

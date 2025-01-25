@@ -11,7 +11,7 @@ from langmem import (
 from langgraph.func import task
 from langgraph.graph import StateGraph
 from langgraph.utils.config import get_config
-from eaia.agent_registry import registry
+from eaia.prompt_registry import registry
 
 
 class MultiMemoryInput(MessagesState):

@@ -9,6 +9,12 @@ from langgraph.store.base import BaseStore
 from typing import TypedDict, Literal, Union, Optional
 from langgraph_sdk import get_client
 from eaia.main.config import get_config
+from eaia.prompt_registry import (
+    REWRITE_PROMPT,
+    RESPONSE_PROMPT,
+    BACKGROUND_PROMPT,
+    CALENDAR_PROMPT,
+)
 
 LGC = get_client()
 
@@ -112,7 +118,7 @@ async def send_message(state: State, config, store):
                 ]
                 + state["messages"],
                 "feedback": f"{user} responded in this way: {response['args']}",
-                "prompt_keys": ["background_preferences"],
+                "prompt_keys": [BACKGROUND_PROMPT.key],
                 "assistant_key": config["configurable"]["assistant_id"],
             }
             await LGC.runs.create(None, "multi_reflection_graph", input=rewrite_state)
@@ -179,10 +185,10 @@ async def send_email_draft(state: State, config, store):
                 + state["messages"],
                 "feedback": f"Error, {user} interrupted and gave this feedback: {response['args']}",
                 "prompt_keys": [
-                    "rewrite_instructions",
-                    "response_preferences",
-                    "background_preferences",
-                    "schedule_preferences",
+                    REWRITE_PROMPT.key,
+                    RESPONSE_PROMPT.key,
+                    BACKGROUND_PROMPT.key,
+                    CALENDAR_PROMPT.key,
                 ],
                 "assistant_key": config["configurable"]["assistant_id"],
             }
@@ -233,10 +239,10 @@ async def send_email_draft(state: State, config, store):
                 ],
                 "feedback": f"A better response would have been: {corrected}",
                 "prompt_keys": [
-                    "rewrite_instructions",
-                    "response_preferences",
-                    "background_preferences",
-                    "schedule_preferences",
+                    REWRITE_PROMPT.key,
+                    RESPONSE_PROMPT.key,
+                    BACKGROUND_PROMPT.key,
+                    CALENDAR_PROMPT.key,
                 ],
                 "assistant_key": config["configurable"]["assistant_id"],
             }
@@ -286,9 +292,9 @@ async def notify(state: State, config, store):
                 + state["messages"],
                 "feedback": f"{user} gave these instructions: {response['args']}",
                 "prompt_keys": [
-                    "response_preferences",
-                    "background_preferences",
-                    "schedule_preferences",
+                    RESPONSE_PROMPT.key,
+                    BACKGROUND_PROMPT.key,
+                    CALENDAR_PROMPT.key,
                 ],
                 "assistant_key": config["configurable"]["assistant_id"],
             }
@@ -356,9 +362,9 @@ async def send_cal_invite(state: State, config, store):
                 + state["messages"],
                 "feedback": f"{user} interrupted gave these instructions: {response['args']}",
                 "prompt_keys": [
-                    "response_preferences",
-                    "background_preferences",
-                    "schedule_preferences",
+                    RESPONSE_PROMPT.key,
+                    BACKGROUND_PROMPT.key,
+                    CALENDAR_PROMPT.key,
                 ],
                 "assistant_key": config["configurable"]["assistant_id"],
             }
@@ -403,9 +409,9 @@ async def send_cal_invite(state: State, config, store):
                 + state["messages"],
                 "feedback": f"{user} interrupted gave these instructions: {response['args']}",
                 "prompt_keys": [
-                    "response_preferences",
-                    "background_preferences",
-                    "schedule_preferences",
+                    RESPONSE_PROMPT.key,
+                    BACKGROUND_PROMPT.key,
+                    CALENDAR_PROMPT.key,
                 ],
                 "assistant_key": config["configurable"]["assistant_id"],
             }

@@ -39,8 +39,13 @@ F = TypeVar("F", bound=Callable)
 class Registry:
     __slots__ = ("registered",)
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        prompts: Sequence[ConfigurablePrompt | ConfigurablePromptLike] | None = None,
+    ) -> None:
         self.registered: dict[str, ConfigurablePrompt] = {}
+        if prompts is not None:
+            self.register(prompts)
 
     def register(
         self,
@@ -60,19 +65,27 @@ class Registry:
             else:
                 if isinstance(prompt, dict):
                     prompt = ConfigurablePrompt(**prompt)
-                keys.append(prompt.name)
-                self.registered[prompt.name] = prompt
+                keys.append(prompt.key)
+                self.registered[prompt.key] = prompt
         return keys
 
     def with_prompts(
         self,
-        keys: str | Sequence[str],
+        prompts: (
+            str
+
+            | ConfigurablePrompt
+            | ConfigurablePromptLike
+            | Sequence[ConfigurablePrompt | ConfigurablePromptLike | str]
+        ),
+        /,
     ) -> Callable[[F], F]:
-        if isinstance(keys, str):
-            keys = [keys]
-        for key in keys:
-            if key not in self.registered:
-                raise ValueError(f"Prompt {key} not registered")
+        if isinstance(prompts, str | ConfigurablePrompt | dict):
+            prompts = [prompts]
+        keys = [prompt if isinstance(prompt, str) else prompt.key for prompt in prompts]
+        missing = [key for key in keys if key not in self.registered]
+        if missing:
+            raise ValueError(f"Prompts {missing} not registered")
 
         def decorator(func: F) -> F:
             try:
@@ -144,46 +157,44 @@ class Registry:
         return f"Registry({self.registered})"
 
 
-registry = Registry()
-registry.register(
-    [
-        {
-            "name": "tone",
-            "key": "rewrite_instructions",
-            "when_to_update": (
-                "Only update the prompt to include instructions on the **style and tone and format** of the response."
-                " Do NOT update the prompt to include anything about the actual content - only the style and tone and format."
-                " Harrison sometimes responds differently to different types of people - take that into account, but don't be too specific."
-            ),
-            "instructions": "Instruction about the tone and style and format of the resulting email. "
-            "Update this if you learn new information about the tone in which Harrison likes to respond that may be relevant in future emails.",
-        },
-        {
-            "name": "background",
-            "key": "background_preferences",
-            "when_to_update": (
-                "Only update the prompt to include pieces of information that are relevant to being Harrison's assistant."
-                " Do not update the instructions to include anything about the tone of emails sent, "
-                "when to send calendar invites. Examples of good things to include are (but are not limited to):"
-                " people's emails, addresses, etc."
-            ),
-            "instructions": "Background information about Harrison or LangChain. Update this if you learn new information about Harrison that may be relevant in future emails",
-        },
-        {
-            "name": "email",
-            "key": "response_preferences",
-            "when_to_update": (
-                "Only update the prompt to include instructions on the **content** of the response. Do NOT update the prompt to include anything about the tone or style or format of the response."
-            ),
-            "instructions": "Instructions about the type of content to be included in email. Update this if you learn new information about how Harrison likes to respond to emails (not the tone, and not information about Harrison, but specifically about how or when he likes to respond to emails) that may be relevant in the future.",
-        },
-        {
-            "name": "calendar",
-            "key": "schedule_preferences",
-            "when_to_update": (
-                "Only update the prompt to include instructions on how to send calendar invites - eg when to send them, what title should be, length, time of day, etc"
-            ),
-            "instructions": "Instructions about how to send calendar invites (including title, length, time, etc). Update this if you learn new information about how Harrison likes to schedule events that may be relevant in future emails.",
-        },
-    ]
+REWRITE_PROMPT = ConfigurablePrompt(
+    name="tone",
+    key="rewrite_instructions",
+    when_to_update=(
+        "Only update the prompt to include instructions on the **style and tone and format** of the response."
+        " Do NOT update the prompt to include anything about the actual content - only the style and tone and format."
+        " the user sometimes responds differently to different types of people - take that into account, but don't be too specific."
+    ),
+    instructions="Instruction about the tone and style and format of the resulting email. "
+    "Update this if you learn new information about the tone in which the user likes to respond that may be relevant in future emails.",
+)
+BACKGROUND_PROMPT = ConfigurablePrompt(
+    name="background",
+    key="background_preferences",
+    when_to_update=(
+        "Only update the prompt to include pieces of information that are relevant to being the user's assistant."
+        " Do not update the instructions to include anything about the tone of emails sent, "
+        "when to send calendar invites. Examples of good things to include are (but are not limited to):"
+        " people's emails, addresses, etc."
+    ),
+    instructions="Background information about the user or LangChain. Update this if you learn new information about the user that may be relevant in future emails",
+)
+RESPONSE_PROMPT = ConfigurablePrompt(
+    name="email",
+    key="response_preferences",
+    when_to_update=(
+        "Only update the prompt to include instructions on the **content** of the response. Do NOT update the prompt to include anything about the tone or style or format of the response."
+    ),
+    instructions="Instructions about the type of content to be included in email. Update this if you learn new information about how the user likes to respond to emails (not the tone, and not information about the user, but specifically about how or when he likes to respond to emails) that may be relevant in the future.",
+)
+CALENDAR_PROMPT = ConfigurablePrompt(
+    name="calendar",
+    key="schedule_preferences",
+    when_to_update=(
+        "Only update the prompt to include instructions on how to send calendar invites - eg when to send them, what title should be, length, time of day, etc"
+    ),
+    instructions="Instructions about how to send calendar invites (including title, length, time, etc). Update this if you learn new information about how the user likes to schedule events that may be relevant in future emails.",
+)
+registry = Registry(
+    [REWRITE_PROMPT, BACKGROUND_PROMPT, RESPONSE_PROMPT, CALENDAR_PROMPT]
 )
