@@ -13,8 +13,5 @@
       "embed": "openai:text-embedding-3-small",
       "dims": 1536
     }
-  },
-  "auth": {
-    "path": "./eaia/auth.py:auth"
   }
 }
