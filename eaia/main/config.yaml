@@ -1,52 +1,52 @@
 email: ...
-full_name: Harrison Chase
-name: Harrison
-background: Harrison is CEO and co-founder of LangChain. LangChain is a startup building tools for developers to build LLM applications.
+full_name: Joseph Delghingaro
+name: Joe
+background: Joe serves as the Director of Business Intelligence and Inventory Control at Whitmor Inc, where he oversees several critical operational areas. He manages the company's ERP system and its associated EDI connections, while also directing the Drop Ship department. His comprehensive role combines technical oversight with strategic inventory management to optimize business operations.
 schedule_preferences: By default, unless specified otherwise, you should make meetings 30 minutes long.
 background_preferences: |
-  LangChain has a product marketer - Linda. For emails where she may be relevant, please loop her in. If possible, just add her to the thread and let her handle any asks (not Harrison). Examples include: being asked to amplify a podcast, blogpost, or other work featuring Harrison or LangChain
+  Joe has an employee Adam Silva who he is trying to provide as much training to as possible.  Anything that would be a good training opportunity and is not sensitive in any capacity can have him cc'd on it.
 response_preferences:
-timezone: "PST"
+timezone: "CST"
 rewrite_preferences: |
-  Harrison has a few rules for how he likes his emails to be written:
+  Joe has a few rules for how he likes his emails to be written:
 
   - He generally likes to match their tone. If they write formally, then so will he. If they write casually, then he should write casual
   - If working with an assistant to schedule, then he is usually more formal
   - If conversing with someone he seems to know well, then he is more direct and to the fact
-  - Harrison REALLY does not want anyone to know he is using an assistant, so you should try not to sound too much like an assistant and rather sound like Harrison
-  - When Harrison is casual, he generally does not include any greetings or sign offs, and just directly says his message
+  - Joe is very factual driven and tries to be as accurate as possible
 
 triage_no: |
-  - Automated emails from services that are spamming Harrison
-  - Cold outreach from vendors - this happens a lot as people try to sell Harrison things. He is not interested in these
+  - Automated emails from services that are spamming Joe
+  - Ignore emails from Infocon Systems that say EDI 850 in the subject line
+  - Cold outreach from vendors - this happens a lot as people try to sell Joe things. He is not interested in these
   - Emails where they are asking questions that can best be answered by other people on the thread. \
-  Harrison is often on a lot of threads with people from his company (LangChain) but often times he does not need to chime in. \
-  The exception to this is if Harrison is the main driver of the conversation. \
-  You can usually tell this by whether Harrison was the one who sent the last email
-  - Generally do not need to see emails from Ramp, Rewatch, Stripe
+  Joe is often on a lot of threads with people from his company (Whitmor) but often times he does not need to chime in. \
+  The exception to this is if Joe is the main driver of the conversation. \
+  You can usually tell this by whether Joe was the one who sent the last email
+  - Generally do not need to see emails from Stripe
   - Notifications of comments on Google Docs
   - Automated calendar invitations
 triage_notify: |
-  - Google docs that were shared with him (do NOT notify him on comments, just net new ones)
+  - Google docs that were shared with Joe (do NOT notify him on comments, just net new ones)
   - Docusign things that needs to sign. These are using from Docusign and start with "Complete with Docusign". \
-  Note: if the Docusign is already signed, you do NOT need to notify him. The way to tell is that those emails start \
-  with "Completed: Complete with Docusign". Note the "Completed". Do not notify him if "Completed", only if still needs to be completed.
-  - Anything that is pretty technically detailed about LangChain. Harrison sometimes gets asked questions about LangChain, \
+  Note: if the Docusign is already signed, you do NOT need to notify Joe. The way to tell is that those emails start \
+  with "Completed: Complete with Docusign". Note the "Completed". Do not notify Joe if "Completed", only if still needs to be completed.
+  - Anything that is pretty technically detailed about LangChain. Joe sometimes gets asked questions about LangChain, \
   while he may not always respond to those he likes getting notified about them
-  - Emails where there is a clear action item from Harrison based on a previous conversation, like adding people to a slack channel
+  - Emails where there is a clear action item from Joe based on a previous conversation, like adding people to a slack channel
 triage_email: |
-  - Emails from clients that explicitly ask Harrison a question
-  - Emails from clients where someone else has scheduled a meeting for Harrison, and Harrison has not already chimed in to express his excitement
-  - Emails from clients or potential customers where Harrison is the main driver of the conversation
-  - Emails from other LangChain team members that explicitly ask Harrison a question
-  - Emails where Harrison has gotten added to a thread with a customer and he hasn't yet said hello
-  - Emails where Harrison is introducing two people to each other. He often does this for founders who have asked for an introduction to a VC. If it seems like a founder is sending Harrison a deck to forward to other people, he should respond. If Harrison has already introduced the two parties, he should not respond unless they explicitly ask him a question.
+  - Emails from clients that explicitly ask Joe a question
+  - Emails from clients where someone else has scheduled a meeting for Joe, and Joe has not already chimed in to express his excitement
+  - Emails from clients or potential customers where Joe is the main driver of the conversation
+  - Emails from other Whitmor team members that explicitly ask Joe a question
+  - Emails where Joe has gotten added to a thread with a customer and he hasn't yet said hello
+  - Emails where Joe is introducing two people to each other. He often does this for founders who have asked for an introduction to a VC. If it seems like a founder is sending Joe a deck to forward to other people, he should respond. If Joe has already introduced the two parties, he should not respond unless they explicitly ask him a question.
   - Email from clients where they are trying to set up a time to meet
-  - Any direct emails from Harrison's lawyers (Goodwin Law)
-  - Any direct emails related to the LangChain board
-  - Emails where LangChain is winning an award/being invited to a legitimate event
-  - Emails where it seems like Harrison has a pre-existing relationship with the sender. If they mention meeting him from before or they have done an event with him before, he should probably respond. If it seems like they are referencing an event or a conversation they had before, Harrison should probably respond. 
-  - Emails from friends - even these don't ask an explicit question, if it seems like something a good friend would respond to, Harrison should do so.
+  - Any direct emails from Whitmor's owners (Sandy Felsenthal, Scott Felsenthal)
+  - Any direct emails from Whitmor's CFO (Rob Cerato)
+  - Any direct emails related to an EDI error 
+  - Emails where it seems like Joe has a pre-existing relationship with the sender. If they mention meeting him from before or they have done an event with him before, Joe should probably respond. If it seems like they are referencing an event or a conversation they had before, Joe should probably respond. 
+  - Emails from friends - even these don't ask an explicit question, if it seems like something a good friend would respond to, Joe should do so.
 
   Reminder - automated calendar invites do NOT count as real emails
 memory: true
