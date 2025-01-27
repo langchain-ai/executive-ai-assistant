@@ -37,6 +37,7 @@ _TOKEN_PATH = str(_SECRETS_DIR / "token.json")
 
 def get_credentials(assistant_id, interactive: bool = False):
     from arcadepy import Arcade
+
     print(assistant_id)
 
     client = Arcade()

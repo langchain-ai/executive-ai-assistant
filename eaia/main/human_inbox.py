@@ -22,21 +22,20 @@ LGC = get_client()
 
 
 async def send_slack_message(state, config):
-
-    client = AsyncWebClient(token=os.environ['SLACK_BOT_TOKEN'])
-    userId = config['configurable'].get('slack_user_id', None)
+    client = AsyncWebClient(token=os.environ["SLACK_BOT_TOKEN"])
+    userId = config["configurable"].get("slack_user_id", None)
     if userId is None:
         return
 
-    if state['notified']:
+    if state["notified"]:
         return
-       
+
     response = await client.conversations_open(users=[userId])
     channel_id = response["channel"]["id"]
-   
+
     await client.chat_postMessage(
-       channel=channel_id,
-       text=state['email']['subject'],
+        channel=channel_id,
+        text=state["email"]["subject"],
     )
 
 

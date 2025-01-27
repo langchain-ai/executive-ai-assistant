@@ -10,8 +10,7 @@ from langmem import (
 )
 from langgraph.func import task
 from langgraph.graph import StateGraph
-from langgraph.utils.config import get_config
-from eaia.prompt_registry import registry
+from eaia.prompt_registry import registry, BACKGROUND_PROMPT
 
 
 class MultiMemoryInput(MessagesState):
@@ -67,10 +66,7 @@ The agent you are managing is called \"{prompt_name}\" and has the following ins
 
 async def multi_reflection_node(state: MultiMemoryInput, store: BaseStore):
     assistant_key = state.get("assistant_key") or "default"
-    configurable = get_config().get("configurable", {})
-    namespace = (
-        assistant_key,
-    )
+    namespace = (assistant_key,)
     prompt_keys = state.get("prompt_keys", [])
     if not prompt_keys:
         return
@@ -89,23 +85,25 @@ async def multi_reflection_node(state: MultiMemoryInput, store: BaseStore):
         )
         for prompt, prompt_item in zip(memories_to_update.values(), prompt_items)
     ]
-    updated_prompts, *_ = await asyncio.gather(
-        *(
-            optimize(
-                [(state["messages"], state.get("feedback", ""))],
-                prompts,
-            ),
-            *(
-                manage_semantic_memory_for_prompt(
-                    state["messages"],
-                    state.get("feedback", ""),
-                    prompt,
-                    assistant_key,
-                )
-                for prompt in prompts
-            ),
+    coros = [
+        optimize(
+            [(state["messages"], state.get("feedback", ""))],
+            prompts,
         )
-    )
+    ]
+    if background_prompt := (
+        next((p for p in prompts if p["name"] == BACKGROUND_PROMPT.key), None)
+    ):
+        coros.append(
+            manage_semantic_memory_for_prompt(
+                state["messages"],
+                state.get("feedback", ""),
+                background_prompt,
+                assistant_key,
+            )
+        )
+
+    updated_prompts, *_ = await asyncio.gather(*coros)
     to_save = [
         p for i, p in enumerate(updated_prompts) if prompts[i]["prompt"] != p["prompt"]
     ]

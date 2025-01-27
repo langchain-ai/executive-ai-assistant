@@ -17,7 +17,7 @@ from eaia.main.human_inbox import (
     send_email_draft,
     notify,
     send_cal_invite,
-    send_slack_message
+    send_slack_message,
 )
 from eaia.gmail import (
     send_email,
@@ -30,7 +30,8 @@ from eaia.schemas import (
 
 
 async def route_after_triage(
-    state: State, config,
+    state: State,
+    config,
 ) -> Literal["draft_response", "mark_as_read_node", "notify"]:
     if state["triage"].response == "email":
         await send_slack_message(state, config)

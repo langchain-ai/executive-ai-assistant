@@ -59,11 +59,7 @@ class Registry:
 
     def with_prompts(
         self,
-        prompts: (
-            str
-            | ConfigurablePrompt
-            | Sequence[ConfigurablePrompt | str]
-        ),
+        prompts: (str | ConfigurablePrompt | Sequence[ConfigurablePrompt | str]),
         /,
     ) -> Callable[[F], F]:
         if isinstance(prompts, str | ConfigurablePrompt | dict):
@@ -96,9 +92,7 @@ class Registry:
             async def wrapper(*args: Any, **kwargs: Any) -> Any:
                 store = get_store()
                 configurable = get_config().get("configurable", {})
-                namespace = (
-                    configurable["assistant_id"],
-                )
+                namespace = (configurable["assistant_id"],)
                 results = await asyncio.gather(
                     *(
                         get_or_set_value(
