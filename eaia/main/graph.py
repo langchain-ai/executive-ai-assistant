@@ -155,7 +155,7 @@ def mark_as_read_node(state, config):
 
 
 def human_node(state: State):
-    pass
+    return {"notified": True}
 
 
 class ConfigSchema(TypedDict):

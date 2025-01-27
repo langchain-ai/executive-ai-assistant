@@ -65,6 +65,6 @@ async def triage_input(state: State, config: RunnableConfig, store: BaseStore):
     response = await model.ainvoke(input_message)
     if len(state["messages"]) > 0:
         delete_messages = [RemoveMessage(id=m.id) for m in state["messages"]]
-        return {"triage": response, "messages": delete_messages}
+        return {"triage": response, "messages": delete_messages, "notified": False}
     else:
-        return {"triage": response}
+        return {"triage": response, "notified": False}

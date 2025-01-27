@@ -92,6 +92,7 @@ class State(TypedDict):
     email: EmailData
     triage: Annotated[RespondTo, convert_obj]
     messages: Annotated[List[AnyMessage], add_messages]
+    notified: bool
 
 
 email_template = """From: {author}

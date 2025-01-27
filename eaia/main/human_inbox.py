@@ -1,6 +1,7 @@
 """Parts of the graph that require human input."""
 
 import uuid
+import os
 
 from langsmith import traceable
 from eaia.schemas import State, email_template
@@ -15,8 +16,28 @@ from eaia.prompt_registry import (
     BACKGROUND_PROMPT,
     CALENDAR_PROMPT,
 )
+from slack_sdk.web.async_client import AsyncWebClient
 
 LGC = get_client()
+
+
+async def send_slack_message(state, config):
+
+    client = AsyncWebClient(token=os.environ['SLACK_BOT_TOKEN'])
+    userId = config['configurable'].get('slack_user_id', None)
+    if userId is None:
+        return
+
+    if state['notified']:
+        return
+       
+    response = await client.conversations_open(users=[userId])
+    channel_id = response["channel"]["id"]
+   
+    await client.chat_postMessage(
+       channel=channel_id,
+       text=state['email']['subject'],
+    )
 
 
 class HumanInterruptConfig(TypedDict):
@@ -92,6 +113,7 @@ async def send_message(state: State, config, store):
         },
         "description": _generate_email_markdown(state),
     }
+    await send_slack_message(state, config)
     response = interrupt([request])[0]
     _email_template = email_template.format(
         email_thread=state["email"]["page_content"],
@@ -158,6 +180,7 @@ async def send_email_draft(state: State, config, store):
         },
         "description": _generate_email_markdown(state),
     }
+    await send_slack_message(state, config)
     response = interrupt([request])[0]
     _email_template = email_template.format(
         email_thread=state["email"]["page_content"],
@@ -270,6 +293,7 @@ async def notify(state: State, config, store):
         },
         "description": _generate_email_markdown(state),
     }
+    await send_slack_message(state, config)
     response = interrupt([request])[0]
     _email_template = email_template.format(
         email_thread=state["email"]["page_content"],
@@ -335,6 +359,7 @@ async def send_cal_invite(state: State, config, store):
         },
         "description": _generate_email_markdown(state),
     }
+    await send_slack_message(state, config)
     response = interrupt([request])[0]
     _email_template = email_template.format(
         email_thread=state["email"]["page_content"],
