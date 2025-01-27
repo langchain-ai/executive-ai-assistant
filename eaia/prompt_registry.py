@@ -144,7 +144,7 @@ class Registry:
 
 REWRITE_PROMPT = ConfigurablePrompt(
     name="tone",
-    key="rewrite_instructions",
+    key="rewrite_preferences",
     when_to_update=(
         "Only update the prompt to include instructions on the **style and tone and format** of the response."
         " Do NOT update the prompt to include anything about the actual content - only the style and tone and format."
