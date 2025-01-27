@@ -36,7 +36,6 @@ async def manage_semantic_memory_for_prompt(
     feedback: str | None,
     prompt: Prompt,
     assistant_key: str,
-    user_id: str,
 ):
     prompt_name = prompt.get("name", "")
     instructions = f"""You are managing memory for an autonomous agent. Extract memories and patterns from its experiences that would be valuable for future decisions.
@@ -51,7 +50,6 @@ The agent you are managing is called \"{prompt_name}\" and has the following ins
         enable_inserts=True,
         query_model="openai:gpt-4o-mini",
         namespace_prefix=(
-            user_id,
             assistant_key,
             "semantic",
             prompt_name,
@@ -103,7 +101,6 @@ async def multi_reflection_node(state: MultiMemoryInput, store: BaseStore):
                     state.get("feedback", ""),
                     prompt,
                     assistant_key,
-                    user_id,
                 )
                 for prompt in prompts
             ),
