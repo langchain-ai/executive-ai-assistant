@@ -113,7 +113,6 @@ async def send_message(state: State, config, store):
         },
         "description": _generate_email_markdown(state),
     }
-    await send_slack_message(state, config)
     response = interrupt([request])[0]
     _email_template = email_template.format(
         email_thread=state["email"]["page_content"],
@@ -180,7 +179,6 @@ async def send_email_draft(state: State, config, store):
         },
         "description": _generate_email_markdown(state),
     }
-    await send_slack_message(state, config)
     response = interrupt([request])[0]
     _email_template = email_template.format(
         email_thread=state["email"]["page_content"],
@@ -293,7 +291,6 @@ async def notify(state: State, config, store):
         },
         "description": _generate_email_markdown(state),
     }
-    await send_slack_message(state, config)
     response = interrupt([request])[0]
     _email_template = email_template.format(
         email_thread=state["email"]["page_content"],
@@ -359,7 +356,6 @@ async def send_cal_invite(state: State, config, store):
         },
         "description": _generate_email_markdown(state),
     }
-    await send_slack_message(state, config)
     response = interrupt([request])[0]
     _email_template = email_template.format(
         email_thread=state["email"]["page_content"],
