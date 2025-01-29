@@ -23,7 +23,7 @@ pytz = "*"
 pyyaml = "*"
 python-dateutil = "^2.9.0.post0"
 python-dotenv = "^1.0.1"
-langmem = "0.0.5rc5"
+langmem = "0.0.5rc6"
 slack_sdk = "*"
 
 [tool.setuptools.packages.find]

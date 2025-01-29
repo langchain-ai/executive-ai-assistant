@@ -2,15 +2,15 @@ import asyncio
 
 from langgraph.graph import MessagesState
 from langgraph.store.base import BaseStore
+from langchain_core.messages import AnyMessage
 from langmem import (
-    AnyMessage,
     Prompt,
     create_multi_prompt_optimizer,
     create_memory_store_enricher,
 )
 from langgraph.func import task
 from langgraph.graph import StateGraph
-from eaia.prompt_registry import registry, BACKGROUND_PROMPT
+from eaia.prompt_registry import registry
 
 
 class MultiMemoryInput(MessagesState):
@@ -26,6 +26,8 @@ optimizer = create_multi_prompt_optimizer(
 
 @task()
 async def optimize(messages: list[tuple[list, str]], prompts: list[Prompt]):
+    if not prompts:
+        return []
     return await optimizer(messages, prompts)
 
 
@@ -38,6 +40,7 @@ async def manage_semantic_memory_for_prompt(
 ):
     prompt_name = prompt.get("name", "")
     instructions = f"""You are managing memory for an autonomous agent. Extract memories and patterns from its experiences that would be valuable for future decisions.
+Try to infer general patterns from specific examples, but include context after the fact to ground the belief and let you know when it should be updated.
 Extract information that captures both what happened and why it's significant. Include sufficient context, relationships, time, etc. about when and how each memory would be relevant to ensure it can be used independently, but exclude irrelevant details.
 Avoid duplication. Prefer contextualizing existing memories with new information to creating new ones. Create new ones when new concepts or events are encountered.
 
@@ -71,7 +74,14 @@ async def multi_reflection_node(state: MultiMemoryInput, store: BaseStore):
     if not prompt_keys:
         return
     memories_to_update = {
-        k: v for k, v in registry.registered.items() if k in prompt_keys
+        k: v
+        for k, v in registry.registered.items()
+        if k in prompt_keys and v.kind == "single"
+    }
+    semantic_memories_to_update = {
+        k: v
+        for k, v in registry.registered.items()
+        if k in prompt_keys and v.kind == "multi"
     }
     prompt_items = await asyncio.gather(
         *[store.aget(namespace, prompt.key) for prompt in memories_to_update.values()]
@@ -85,23 +95,32 @@ async def multi_reflection_node(state: MultiMemoryInput, store: BaseStore):
         )
         for prompt, prompt_item in zip(memories_to_update.values(), prompt_items)
     ]
+    semantic_prompts = [
+        Prompt(
+            name=prompt.key,  # we're just using the key always now
+            prompt=prompt_item.value["data"] or "" if prompt_item is not None else "",
+            update_instructions=f"{prompt.key}: {prompt.instructions}",
+            when_to_update=prompt.when_to_update,
+        )
+        for prompt, prompt_item in zip(
+            semantic_memories_to_update.values(), prompt_items
+        )
+    ]
     coros = [
         optimize(
             [(state["messages"], state.get("feedback", ""))],
             prompts,
         )
     ]
-    if background_prompt := (
-        next((p for p in prompts if p["name"] == BACKGROUND_PROMPT.key), None)
-    ):
-        coros.append(
-            manage_semantic_memory_for_prompt(
-                state["messages"],
-                state.get("feedback", ""),
-                background_prompt,
-                assistant_key,
-            )
+    coros.extend(
+        manage_semantic_memory_for_prompt(
+            state["messages"],
+            state.get("feedback", ""),
+            prompt,
+            assistant_key,
         )
+        for prompt in semantic_prompts
+    )
 
     updated_prompts, *_ = await asyncio.gather(*coros)
     to_save = [

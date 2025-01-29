@@ -4,6 +4,7 @@ from contextvars import ContextVar
 from langgraph.utils.config import get_store, get_config
 from langgraph.store.base import BaseStore
 import asyncio
+from typing import Literal
 
 
 class ConfigurablePrompt(NamedTuple):
@@ -11,6 +12,7 @@ class ConfigurablePrompt(NamedTuple):
     key: str
     when_to_update: str
     instructions: str
+    kind: Literal["single", "vector"] = "single"
 
 
 class ConfiguredPrompt(NamedTuple):
@@ -59,7 +61,7 @@ class Registry:
 
     def with_prompts(
         self,
-        prompts: (str | ConfigurablePrompt | Sequence[ConfigurablePrompt | str]),
+        prompts: str | ConfigurablePrompt | Sequence[ConfigurablePrompt | str],
         /,
     ) -> Callable[[F], F]:
         if isinstance(prompts, str | ConfigurablePrompt | dict):
@@ -157,6 +159,7 @@ BACKGROUND_PROMPT = ConfigurablePrompt(
         " people's emails, addresses, etc."
     ),
     instructions="Background information about the user or LangChain. Update this if you learn new information about the user that may be relevant in future emails",
+    kind="multi",
 )
 RESPONSE_PROMPT = ConfigurablePrompt(
     name="email",
