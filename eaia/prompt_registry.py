@@ -5,6 +5,9 @@ from langgraph.utils.config import get_store, get_config
 from langgraph.store.base import BaseStore
 import asyncio
 from typing import Literal
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigurablePrompt(NamedTuple):
@@ -109,7 +112,7 @@ class Registry:
                 prompts = _used_prompts.set(
                     {
                         prompt.key: ConfiguredPrompt(
-                            *prompt,
+                            *(prompt[:4]),
                             value=result,
                         )
                         for result, prompt in zip(results, prompts_.values())
@@ -129,9 +132,9 @@ class Registry:
         """Get the current prompt from context."""
         current = _used_prompts.get()
         if current is None:
-            raise RuntimeError(
-                "No prompt context found. Use @registry.with_prompt decorator."
-            )
+            logger.info("No prompt context found. Returning empty dict.")
+            return {}
+
         return current
 
     def __repr__(self) -> str:
