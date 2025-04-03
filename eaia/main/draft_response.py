@@ -103,7 +103,6 @@ async def draft_response(state: State, config: RunnableConfig):
 
     llm = ChatOpenAI(
         model=model,
-        temperature=0,
         tool_choice="required",
     )
     tools = [

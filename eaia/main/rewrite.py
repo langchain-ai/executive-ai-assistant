@@ -34,7 +34,7 @@ but adjusting the tone.
 )
 async def rewrite(state: State, config: RunnableConfig):
     model = config["configurable"].get("model", "o3-mini")
-    llm = ChatOpenAI(model=model, temperature=0)
+    llm = ChatOpenAI(model=model)
     prev_message = state["messages"][-1]
     draft = prev_message.tool_calls[0]["args"]["content"]
     system_message = rewrite_prompt_system.format(
