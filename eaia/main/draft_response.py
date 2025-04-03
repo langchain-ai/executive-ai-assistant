@@ -63,8 +63,6 @@ When adding new recipients - only do that if {name} explicitly asks for it and y
 Sometimes you will want to schedule a calendar event. You can do this with the `SendCalendarInvite` tool.
 If you are sure that {name} would want to schedule a meeting, and you know that {name}'s calendar is free, you can schedule a meeting by calling the `SendCalendarInvite` tool. {name} trusts you to pick good times for meetings. You shouldn't ask {name} for what meeting times are preferred, but you should make sure he wants to meet. 
 
-{schedule_preferences}
-
 # Using the `NewEmailDraft` tool
 
 Sometimes you will need to start a new email thread. If you have all the necessary information for this, use the `NewEmailDraft` tool for this.
@@ -99,7 +97,7 @@ Here is the email thread. Note that this is the full email thread. Pay special a
 )
 async def draft_response(state: State, config: RunnableConfig):
     """Write an email to a customer."""
-    model = config["configurable"].get("model", "gpt-4o")
+    model = config["configurable"].get("model", "o3-mini")
 
     llm = ChatOpenAI(
         model=model,
@@ -121,7 +119,6 @@ async def draft_response(state: State, config: RunnableConfig):
     prompts = registry.prompts
     memories = await search_memories([{"role": "user", "content": str(state["email"])}])
     input_message = EMAIL_WRITING_INSTRUCTIONS.format(
-        schedule_preferences=prompts[CALENDAR_PROMPT.key].value,
         background_preferences=prompts[BACKGROUND_PROMPT.key].value,
         response_preferences=prompts[RESPONSE_PROMPT.key].value,
         memories=memories,

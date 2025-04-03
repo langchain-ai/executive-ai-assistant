@@ -7,6 +7,13 @@ from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 
+from eaia.prompt_registry import (
+    registry,
+    BACKGROUND_PROMPT,
+    CALENDAR_PROMPT,
+    RESPONSE_PROMPT,
+)
+
 from eaia.gmail import get_events_for_days
 from eaia.main.utils import p
 from eaia.schemas import State
@@ -54,7 +61,13 @@ Example 2:
 
 </examples>
 
-The current data is {current_date}
+Here are other instructions for scheduling:
+
+<scheduling_instructions>
+{schedule_preferences}
+</scheduling_instructions>
+
+The current date is {current_date}
 
 Here is the email thread:
 
@@ -63,14 +76,19 @@ Subject: {subject}
 
 {email_thread}""")
 
-
+@registry.with_prompts(
+    (
+        CALENDAR_PROMPT,
+    )
+)
 async def find_meeting_time(state: State, config: RunnableConfig):
     """Write an email to a customer."""
-    model = config["configurable"].get("model", "gpt-4o")
+    model = config["configurable"].get("model", "o3-mini")
     llm = ChatOpenAI(model=model, temperature=0)
     agent = create_react_agent(llm, [get_events_for_days])
     current_date = datetime.now()
     prompt_config = get_config(config)
+    prompts = registry.prompts
     input_message = meeting_prompts.format(
         email_thread=state["email"]["page_content"],
         author=state["email"]["from_email"],
@@ -79,6 +97,7 @@ async def find_meeting_time(state: State, config: RunnableConfig):
         name=prompt_config["name"],
         full_name=prompt_config["full_name"],
         tz=prompt_config["timezone"],
+        schedule_preferences=prompts[CALENDAR_PROMPT.key].value,
     )
     messages = state.get("messages") or []
     # we do this because theres currently a tool call just for routing
