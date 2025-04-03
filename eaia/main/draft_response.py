@@ -82,6 +82,8 @@ Note that you should only call this if working to schedule a meeting - if a meet
 
 Remember to call a tool correctly! Use the specified names exactly - not add `functions::` to the start. Pass all required arguments.
 
+ONLY CALL ONE TOOL AT A TIME!!! NEVER CALL MULTIPLE TOOLS!!!
+
 Here is the email thread. Note that this is the full email thread. Pay special attention to the most recent email.
 
 {email}"""
@@ -102,7 +104,6 @@ async def draft_response(state: State, config: RunnableConfig):
     llm = ChatOpenAI(
         model=model,
         temperature=0,
-        parallel_tool_calls=False,
         tool_choice="required",
     )
     tools = [
@@ -137,9 +138,12 @@ async def draft_response(state: State, config: RunnableConfig):
     i = 0
     while i < 5:
         response = await model.ainvoke(messages)
-        if len(response.tool_calls) != 1:
+        if len(response.tool_calls) == 0:
             i += 1
-            messages += [{"role": "user", "content": "Please call a valid tool call."}]
+            messages += [{"role": "user", "content": "Please call a valid tool call. "}]
+        elif len(response.tool_calls) > 1:
+            i += 1
+            messages += [{"role": "user", "content": "Please only call a single tool at a time."}]
         else:
             break
     return {"draft": response, "messages": [response]}
