@@ -298,7 +298,7 @@ async def notify(state: State, config, store):
         to=state["email"].get("to_email", ""),
     )
     if response["type"] == "response":
-        msg = {"type": "user", "content": response["args"]}
+        msg = {"type": "user", "content": f"I asked {user} what we should do, this was the response:\n\n{response['args']}"}
         if memory:
             await save_email(state, config, store, "email")
             rewrite_state = {
