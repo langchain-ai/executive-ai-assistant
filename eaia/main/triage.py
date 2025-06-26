@@ -15,7 +15,7 @@ from eaia.main.config import get_config
 
 triage_prompt = """You are {full_name}'s executive assistant. You are a top-notch executive assistant who cares about {name} performing as well as possible.
 
-{background}. 
+{background}.
 
 {name} gets lots of emails. Your job is to categorize the below email to see whether is it worth responding to.
 

@@ -2,10 +2,10 @@
 
 from datetime import datetime
 
+from langchain.agents.react.agent import create_react_agent
 from langchain_core.messages import ToolMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
-from langgraph.prebuilt import create_react_agent
 
 from eaia.gmail import get_events_for_days
 from eaia.schemas import State

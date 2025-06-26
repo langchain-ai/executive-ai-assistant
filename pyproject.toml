@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-langgraph = "^0.2.48"
+langgraph = "^0.4.5"
 langgraph-checkpoint = "^2.0.0"
 langchain = "^0.3.9"
 langchain-openai = "^0.2"
