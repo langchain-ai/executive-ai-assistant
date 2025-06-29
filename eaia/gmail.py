@@ -42,29 +42,19 @@ def get_credentials(assistant_id, interactive: bool = False):
 
     client = Arcade()
 
-    try:
-        auth_response = client.auth.start(
-            user_id=assistant_id,
-            provider="google",
-            scopes=_SCOPES,
-        )
+    auth_response = client.auth.start(
+        user_id=assistant_id,
+        provider="google",
+        scopes=_SCOPES,
+    )
 
-        if auth_response.status != "completed":
-            if interactive:
-                print(f"Authorization URL: {auth_response.url}")
-                webbrowser.open(str(auth_response.url))
-                auth_response = client.auth.wait_for_completion(auth_response)
-            else:
-                raise ValueError(f"Authorization failed: {auth_response}")
-    except ValueError as e:
-        auth_response = client.auth.start(
-            user_id=assistant_id,
-            provider="google",
-            scopes=_OLD_SCOPES,
-        )
-
-        if auth_response.status != "completed":
-            raise ValueError(f"Authorization failed: {auth_response.status}") from e
+    if auth_response.status != "completed":
+        if interactive:
+            print(f"Authorization URL: {auth_response.url}")
+            webbrowser.open(str(auth_response.url))
+            auth_response = client.auth.wait_for_completion(auth_response)
+        else:
+            raise ValueError(f"Authorization failed: {auth_response}")
 
     from google.oauth2.credentials import Credentials
 
