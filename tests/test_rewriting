@@ -1,0 +1,85 @@
+from typing import TypedDict, Annotated
+from langchain.chat_models import ChatOpenAI
+from langchain.schema import AIMessage
+from eaia.main.config import get_config
+from eaia.main.graph import graph, take_action
+from langsmith import testing as t
+import pytest
+
+config = {"configurable": {"__pregel_store": InMemoryStore(), 
+    "checkpoint_ns": ""
+}}
+
+rewrite_input = {
+  "email": {
+    "id": "943e07b28c61f5da",
+    "thread_id": "b26f4d381059e7ca",
+    "from_email": "Isaac Francisco <isaac@langchain.dev>",
+    "subject": "Next steps on email assistant?",
+    "page_content": """Harrison,
+
+    wanted to reach out to ask about next steps for the email assistant
+
+    here are the things we agreed upon yesterday, and I was going to start on today
+    just want to confirm I should be working on them
+
+    - add more email providers
+    - make it run with local models by default
+    - add a dedicated front end for the assistant
+
+    lmk what you think
+    """,
+    "send_time": "2025-01-17T14:27:06-08:00",
+    "to_email": "Harrison Chase <harrison@langchain.dev>"
+  },
+  "triage": {
+      "logic": "This is an email from a work associate of Harrison's asking a specific question. Harrison should respond to this email.",
+      "response": "email"
+  },
+  "messages": []
+}
+
+class Faithfulness(TypedDict):
+    reasoning: Annotated[str, ..., "The reasoning behind the faithfulness score."]
+    faithfulness: Annotated[float, ..., "A float from 0 to 1, where 0 is no faithfulness and 1 is perfect faithfulness to the instructions."]
+
+@pytest.mark.langsmith
+async def test_rewrite_style():
+    rewrite_preferences = get_config(config)["rewrite_preferences"]
+    t.log_inputs(rewrite_input)
+
+    res = await graph.nodes['draft_response'].ainvoke(rewrite_input, config)
+    assert res['draft'].additional_kwargs['tool_calls'][0]['function']['name'] == "ResponseEmailDraft"
+
+    action = take_action(res)
+    assert action == "rewrite"
+
+    messages = [AIMessage(content="", tool_calls=[{
+        "name": "ResponseEmailDraft",
+        "args": {
+            "content": """Dear Mr. Francisco,
+
+    Thank you for sharing your insights regarding the email assistant. Your suggestions are duly noted. I concur that expanding support to additional email providers, configuring the assistant to utilize local models by default, and developing a dedicated front end are all worthwhile endeavors.
+
+    These are valuable proposals, and I will be reviewing them further. Please advise if there are any further details or priorities you wish to emphasize.
+
+    Sincerely,
+    Harrison Chase""",
+            "new_recipients": []
+        },
+        "id": "0"
+    }])]
+
+    rewrite = await graph.nodes['rewrite'].ainvoke({"messages": messages, "email": rewrite_input["email"]}, config)
+    t.log_outputs(rewrite)
+
+    llm_judge = ChatOpenAI(model="gpt-4o", temperature=0).with_structured_output(Faithfulness)
+
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant that determines how faithful a response is to the instructions."},
+        {"role": "user", "content": f"Here are the instructions: {rewrite_preferences}, and here is the response: {rewrite['messages'][0]['tool_calls'][0]['args']['content']}"},
+    ]
+    
+    with t.trace_feedback():
+        faithfulness = llm_judge.invoke(messages)
+        t.log_feedback(key="faithfulness", score=faithfulness['faithfulness'])
