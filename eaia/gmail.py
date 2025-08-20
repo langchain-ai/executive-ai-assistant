@@ -71,15 +71,9 @@ async def get_credentials(
             raise ValueError("Failed to obtain access token")
         
         # Create credentials object from the token
-        # Note: langchain auth-client returns the full token, we need to parse it
-        token_data = json.loads(token) if isinstance(token, str) else token
-        
+        # langchain auth-client returns the access token as a string
         creds = Credentials(
-            token=token_data.get("access_token"),
-            refresh_token=token_data.get("refresh_token"),
-            token_uri=token_data.get("token_uri", "https://oauth2.googleapis.com/token"),
-            client_id=token_data.get("client_id"),
-            client_secret=token_data.get("client_secret"),
+            token=token,
             scopes=_SCOPES
         )
         

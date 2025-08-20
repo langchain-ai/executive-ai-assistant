@@ -18,7 +18,7 @@ async def main(state: JobKickoff, config):
     minutes_since: int = state["minutes_since"]
     email = get_config(config)["email"]
 
-    async for email in await fetch_group_emails(email, minutes_since=minutes_since):
+    async for email in fetch_group_emails(email, minutes_since=minutes_since):
         thread_id = str(
             uuid.UUID(hex=hashlib.md5(email["thread_id"].encode("UTF-8")).hexdigest())
         )

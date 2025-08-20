@@ -29,12 +29,18 @@ async def main(
             url=url
         )
 
-    async for email in await fetch_group_emails(
+    print(f"📧 Fetching emails for {email_address} from last {minutes_since} minutes...")
+    
+    email_count = 0
+    async for email in fetch_group_emails(
         email_address,
         minutes_since=minutes_since,
         gmail_token=gmail_token,
         gmail_secret=gmail_secret,
     ):
+        email_count += 1
+        print(f"📬 Email {email_count}: {email.get('subject', 'No Subject')} from {email.get('from_email', 'Unknown')}")
+        
         thread_id = str(
             uuid.UUID(hex=hashlib.md5(email["thread_id"].encode("UTF-8")).hexdigest())
         )
