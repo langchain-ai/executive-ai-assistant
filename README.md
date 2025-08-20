@@ -54,7 +54,7 @@ The configuration for EAIA can be found in `eaia/main/config.yaml`. Every key in
 - `full_name`: Full name of user
 - `name`: First name of user
 - `background`: Basic info on who the user is
-- `timezone`: Default timezone the user is in
+- `timezone`: Default timezone where the user is
 - `schedule_preferences`: Any preferences for how calendar meetings are scheduled. E.g. length, name of meetings, etc
 - `background_preferences`: Any background information that may be needed when responding to emails. E.g. coworkers to loop in, etc.
 - `response_preferences`: Any preferences for what information to include in emails. E.g. whether to send calendly links, etc.
