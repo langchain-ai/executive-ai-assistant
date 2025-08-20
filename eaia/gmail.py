@@ -190,14 +190,13 @@ def send_email(
     send_message(service, "me", response_message)
 
 
-def fetch_group_emails(
+async def fetch_group_emails(
     to_email,
     minutes_since: int = 30,
     gmail_token: str | None = None,
     gmail_secret: str | None = None,
 ) -> Iterable[EmailData]:
-    import asyncio
-    creds = asyncio.run(get_credentials(to_email))
+    creds = await get_credentials(to_email)
 
     service = build("gmail", "v1", credentials=creds)
     after = int((datetime.now() - timedelta(minutes=minutes_since)).timestamp())
