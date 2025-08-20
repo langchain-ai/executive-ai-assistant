@@ -1264,14 +1264,14 @@ xxhash = ">=3.5.0"
 
 [[package]]
 name = "langgraph-api"
-version = "0.2.102"
+version = "0.2.134"
 description = ""
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
 files = [
-    {file = "langgraph_api-0.2.102-py3-none-any.whl", hash = "sha256:5f87dec15cff2ae0b255ae77d371f2bcf0f8631e31b149004f74cd07be5bba97"},
-    {file = "langgraph_api-0.2.102.tar.gz", hash = "sha256:7ef0abde999b7e0c38691aaa87bd0e20914c3d881b3076742391f4c067ec5aa2"},
+    {file = "langgraph_api-0.2.134-py3-none-any.whl", hash = "sha256:f30fb474a346ddf40c9e8b2aad485bcce9be33d294fea68769c5a6315f0457e8"},
+    {file = "langgraph_api-0.2.134.tar.gz", hash = "sha256:75a098c9241dc29c0968b69e249c984f4bd3d77d91716837e490f80a282d93dd"},
 ]
 
 [package.dependencies]
@@ -1280,10 +1280,10 @@ cryptography = ">=42.0.0,<45.0"
 httpx = ">=0.25.0"
 jsonschema-rs = ">=0.20.0,<0.30"
 langchain-core = ">=0.3.64"
-langgraph = ">=0.3.27"
+langgraph = ">=0.4.0"
 langgraph-checkpoint = ">=2.0.23"
-langgraph-runtime-inmem = ">=0.6.0,<0.7"
-langgraph-sdk = ">=0.1.74"
+langgraph-runtime-inmem = ">=0.8.0,<0.9.0"
+langgraph-sdk = ">=0.2.0"
 langsmith = ">=0.3.45"
 orjson = ">=3.9.7"
 pyjwt = ">=2.9.0"
@@ -1351,14 +1351,14 @@ langgraph-checkpoint = ">=2.1.0"
 
 [[package]]
 name = "langgraph-runtime-inmem"
-version = "0.6.13"
+version = "0.8.0"
 description = "Inmem implementation for the LangGraph API server."
 optional = false
 python-versions = ">=3.11.0"
 groups = ["main"]
 files = [
-    {file = "langgraph_runtime_inmem-0.6.13-py3-none-any.whl", hash = "sha256:e1fe25edf68c53359d443bbf3ea67fee2bd0b875de65584da236dbbedac6982d"},
-    {file = "langgraph_runtime_inmem-0.6.13.tar.gz", hash = "sha256:1756c557f83a8cd979ef97d3d0a36fa990666e63059212c6e11af2957b99350b"},
+    {file = "langgraph_runtime_inmem-0.8.0-py3-none-any.whl", hash = "sha256:85398321fc186618b0957c4d8629cc059fce2e7f57a4756ef83a75575791da1b"},
+    {file = "langgraph_runtime_inmem-0.8.0.tar.gz", hash = "sha256:3082273f65650665b4a3875241721087fd51e675eb0227b18dc271839ce99594"},
 ]
 
 [package.dependencies]
@@ -1371,14 +1371,14 @@ structlog = ">23"
 
 [[package]]
 name = "langgraph-sdk"
-version = "0.1.74"
+version = "0.2.2"
 description = "SDK for interacting with LangGraph API"
 optional = false
 python-versions = ">=3.9"
 groups = ["main", "dev"]
 files = [
-    {file = "langgraph_sdk-0.1.74-py3-none-any.whl", hash = "sha256:3a265c3757fe0048adad4391d10486db63ef7aa5a2cbd22da22d4503554cb890"},
-    {file = "langgraph_sdk-0.1.74.tar.gz", hash = "sha256:7450e0db5b226cc2e5328ca22c5968725873630ef47c4206a30707cb25dc3ad6"},
+    {file = "langgraph_sdk-0.2.2-py3-none-any.whl", hash = "sha256:1afbec01ade166f8b6ce18782875415422eb70dcb82852aeaa373e6152db4b82"},
+    {file = "langgraph_sdk-0.2.2.tar.gz", hash = "sha256:9484e8071953df75d7aaf9845d82db3595e485af7d5dcc235c9b32c52362e1fc"},
 ]
 
 [package.dependencies]
@@ -3641,4 +3641,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "6f3ffa47fc31c1e3aae1315baac49965c9b2b3a0bef63990f2d8ea7f2866fc66"
+content-hash = "2f8b26c91fa4e285802b051afab60dbf9a29ef76f734b420e60729697af9df2a"

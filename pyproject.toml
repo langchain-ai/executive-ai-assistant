@@ -14,13 +14,14 @@ langchain-openai = "^0.2"
 langchain-anthropic = "^0.3"
 google-api-python-client = "^2.128.0"
 langchain-auth = "^0.1.2"
-langgraph-sdk = "^0.1"
+langgraph-sdk = "^0.2"
 langsmith = "^0.3.45"
 pytz = "*"
 pyyaml = "*"
 python-dateutil = "^2.9.0.post0"
 python-dotenv = "^1.0.1"
 langgraph-cli = {extras = ["inmem"], version = "^0.3.6"}
+langgraph-api = "^0.2.134"
 
 [tool.setuptools.packages.find]
 where = ["src"]
