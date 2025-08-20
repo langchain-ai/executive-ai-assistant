@@ -32,8 +32,7 @@ Table of contents
 
 1. Export OpenAI API key (`export OPENAI_API_KEY=...`)
 2. Export Anthropic API key (`export ANTHROPIC_API_KEY=...`)
-3. Export LangSmith API key (`export LANGSMITH_API_KEY=...`) - **Required for authentication**
-4. Set up Google OAuth
+3. Set up Google OAuth
    1. [Enable the API](https://developers.google.com/gmail/api/quickstart/python#enable_the_api)
       - Enable Gmail API if not already by clicking the blue button `Enable the API`
    2. [Authorize credentials for a desktop application](https://developers.google.com/gmail/api/quickstart/python#authorize_credentials_for_a_desktop_application)
@@ -45,7 +44,7 @@ Table of contents
 7. `mv ${PATH-TO-CLIENT-SECRET.JSON} eaia/.secrets/secrets.json` - This will move the client secret you just created to that secrets folder
 8. `python scripts/setup_gmail.py` - This will create the Google OAuth provider using LangChain Auth and handle the initial authentication flow.
 
-**Authentication Flow**: EAIA now uses LangChain Auth for OAuth management. The setup script creates a Google OAuth provider that handles token storage and refresh automatically. When you first run the application, you'll be prompted to complete OAuth authentication if needed.
+**Authentication Flow**: EAIA uses LangChain Auth for OAuth management. The setup script creates a Google OAuth provider that handles token storage and refresh automatically. When you first run the application, you'll be prompted to complete OAuth authentication if needed.
 
 ### Configuration
 
@@ -120,10 +119,7 @@ You will need a LangSmith Plus account to be able to access [LangGraph Platform]
 7. Add the following environment variables
    1. `OPENAI_API_KEY`
    2. `ANTHROPIC_API_KEY`  
-   3. `LANGSMITH_API_KEY` - **Required for LangChain Auth**
 8. Click `Submit` and watch your EAIA deploy
-
-> **Note**: With the new LangChain Auth system, you no longer need to manually manage `GMAIL_SECRET` and `GMAIL_TOKEN` environment variables. The OAuth provider created during setup handles authentication automatically.
 
 ### Ingest manually
 
