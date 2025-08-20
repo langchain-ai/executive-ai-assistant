@@ -145,8 +145,9 @@ def send_email_node(state, config):
     )
 
 
-def mark_as_read_node(state):
-    mark_as_read(state["email"]["id"])
+def mark_as_read_node(state, config):
+    email = get_config(config)["email"]
+    mark_as_read(state["email"]["id"], email)
 
 
 def human_node(state: State):

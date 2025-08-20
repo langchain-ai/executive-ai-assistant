@@ -4,16 +4,16 @@ from pathlib import Path
 from typing import Iterable
 import pytz
 import os
+import json
 
 from dateutil import parser
-from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 import base64
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import email.utils
+from langchain_auth import Client
 
 from langchain_core.tools import tool
 from langchain_core.pydantic_v1 import BaseModel, Field
@@ -25,44 +25,68 @@ _SCOPES = [
     "https://www.googleapis.com/auth/gmail.modify",
     "https://www.googleapis.com/auth/calendar",
 ]
-_ROOT = Path(__file__).parent.absolute()
-_PORT = 54191
-_SECRETS_DIR = _ROOT / ".secrets"
-_SECRETS_PATH = str(_SECRETS_DIR / "secrets.json")
-_TOKEN_PATH = str(_SECRETS_DIR / "token.json")
 
 
-def get_credentials(
-    gmail_token: str | None = None, gmail_secret: str | None = None
+async def get_credentials(
+    user_email: str,
+    langsmith_api_key: str | None = None
 ) -> Credentials:
-    creds = None
-    _SECRETS_DIR.mkdir(parents=True, exist_ok=True)
-    gmail_token = gmail_token or os.getenv("GMAIL_TOKEN")
-    if gmail_token:
-        with open(_TOKEN_PATH, "w") as token:
-            token.write(gmail_token)
-    gmail_secret = gmail_secret or os.getenv("GMAIL_SECRET")
-    if gmail_secret:
-        with open(_SECRETS_PATH, "w") as secret:
-            secret.write(gmail_secret)
-    if os.path.exists(_TOKEN_PATH):
-        creds = Credentials.from_authorized_user_file(_TOKEN_PATH)
-
-    if not creds or not creds.valid or not creds.has_scopes(_SCOPES):
-        if (
-            creds
-            and creds.expired
-            and creds.refresh_token
-            and creds.has_scopes(_SCOPES)
-        ):
-            creds.refresh(Request())
+    """Get Google API credentials using langchain auth-client.
+    
+    Args:
+        user_email: User's Gmail email address (used as user_id for auth)
+        langsmith_api_key: LangSmith API key for auth client
+        
+    Returns:
+        Google OAuth2 credentials
+    """
+    api_key = langsmith_api_key or os.getenv("LANGSMITH_API_KEY")
+    if not api_key:
+        raise ValueError("LANGSMITH_API_KEY environment variable must be set")
+    
+    client = Client(api_key=api_key)
+    
+    try:
+        # Authenticate with Google using the user's email as user_id
+        auth_result = await client.authenticate(
+            provider="google",
+            scopes=_SCOPES,
+            user_id=user_email
+        )
+        
+        if auth_result.needs_auth:
+            print(f"Please visit: {auth_result.auth_url}")
+            print("Complete the OAuth flow and then retry.")
+            
+            # Wait for completion outside of LangGraph context
+            completed_result = await client.wait_for_completion(
+                auth_id=auth_result.auth_id,
+                timeout=300
+            )
+            token = completed_result.token
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(_SECRETS_PATH, _SCOPES)
-            creds = flow.run_local_server(port=_PORT)
-        with open(_TOKEN_PATH, "w") as token:
-            token.write(creds.to_json())
-
-    return creds
+            token = auth_result.token
+        
+        if not token:
+            raise ValueError("Failed to obtain access token")
+        
+        # Create credentials object from the token
+        # Note: langchain auth-client returns the full token, we need to parse it
+        token_data = json.loads(token) if isinstance(token, str) else token
+        
+        creds = Credentials(
+            token=token_data.get("access_token"),
+            refresh_token=token_data.get("refresh_token"),
+            token_uri=token_data.get("token_uri", "https://oauth2.googleapis.com/token"),
+            client_id=token_data.get("client_id"),
+            client_secret=token_data.get("client_secret"),
+            scopes=_SCOPES
+        )
+        
+        return creds
+        
+    finally:
+        await client.close()
 
 
 def extract_message_part(msg):
@@ -139,7 +163,8 @@ def send_email(
     gmail_secret: str | None = None,
     addn_receipients=None,
 ):
-    creds = get_credentials(gmail_token, gmail_secret)
+    import asyncio
+    creds = asyncio.run(get_credentials(email_address))
 
     service = build("gmail", "v1", credentials=creds)
     message = service.users().messages().get(userId="me", id=email_id).execute()
@@ -171,7 +196,8 @@ def fetch_group_emails(
     gmail_token: str | None = None,
     gmail_secret: str | None = None,
 ) -> Iterable[EmailData]:
-    creds = get_credentials(gmail_token, gmail_secret)
+    import asyncio
+    creds = asyncio.run(get_credentials(to_email))
 
     service = build("gmail", "v1", credentials=creds)
     after = int((datetime.now() - timedelta(minutes=minutes_since)).timestamp())
@@ -268,10 +294,12 @@ def fetch_group_emails(
 
 def mark_as_read(
     message_id,
+    user_email: str,
     gmail_token: str | None = None,
     gmail_secret: str | None = None,
 ):
-    creds = get_credentials(gmail_token, gmail_secret)
+    import asyncio
+    creds = asyncio.run(get_credentials(user_email))
 
     service = build("gmail", "v1", credentials=creds)
     service.users().messages().modify(
@@ -297,8 +325,16 @@ def get_events_for_days(date_strs: list[str]):
 
     Returns: availability for those days.
     """
-
-    creds = get_credentials(None, None)
+    import asyncio
+    # Note: This function needs user_email from config - will be handled by calling code
+    from .main.config import get_config
+    from langchain_core.runnables.config import ensure_config
+    
+    config = ensure_config()
+    user_config = get_config(config)
+    user_email = user_config["email"]
+    
+    creds = asyncio.run(get_credentials(user_email))
     service = build("calendar", "v3", credentials=creds)
     results = ""
     for date_str in date_strs:
@@ -373,7 +409,8 @@ def print_events(events):
 def send_calendar_invite(
     emails, title, start_time, end_time, email_address, timezone="PST"
 ):
-    creds = get_credentials(None, None)
+    import asyncio
+    creds = asyncio.run(get_credentials(email_address))
     service = build("calendar", "v3", credentials=creds)
 
     # Parse the start and end times
