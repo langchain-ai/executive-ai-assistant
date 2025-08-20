@@ -15,8 +15,8 @@ Table of contents
   - [Ingest emails](#ingest-emails-locally)
   - [Connect to Agent Inbox](#set-up-agent-inbox-with-local-eaia)
   - [Use Agent Inbox](#use-agent-inbox)
-- [Run in production (LangGraph Cloud)](#run-in-production--langgraph-cloud-)
-  - [Setup EAIA on LangGraph Cloud](#set-up-eaia-on-langgraph-cloud)
+- [Run in production (LangGraph Platform)](#run-in-production--langgraph-platform)
+  - [Setup EAIA on LangGraph Platform](#set-up-eaia-on-langgraph-platform)
   - [Ingest manually](#ingest-manually)
   - [Set up cron job](#set-up-cron-job)
 
@@ -68,7 +68,7 @@ The configuration for EAIA can be found in `eaia/main/config.yaml`. Every key in
 
 You can run EAIA locally.
 This is useful for testing it out, but when wanting to use it for real you will need to have it always running (to run the cron job to check for emails).
-See [this section](#run-in-production--langgraph-cloud-) for instructions on how to run in production (on LangGraph Cloud)
+See [this section](#run-in-production--langgraph-platform) for instructions on how to run in production (on LangGraph Platform)
 
 ### Set up EAIA locally
 
@@ -104,14 +104,12 @@ After we have [run it locally](#run-locally), we can interract with any results.
 
 You can now interract with EAIA in the Agent Inbox.
 
-## Run in production (LangGraph Cloud)
+## Run in production (LangGraph Platform)
 
-These instructions will go over how to run EAIA in LangGraph Cloud.
-You will need a LangSmith Plus account to be able to access [LangGraph Cloud](https://langchain-ai.github.io/langgraph/concepts/langgraph_cloud/)
+These instructions will go over how to run EAIA in LangGraph Platform.
+You will need a LangSmith Plus account to be able to access [LangGraph Platform](https://docs.langchain.com/langgraph-platform)
 
-If desired, you can always run EAIA in a self-hosted manner using LangGraph Platform [Lite](https://langchain-ai.github.io/langgraph/concepts/self_hosted/#self-hosted-lite) or [Enterprise](https://langchain-ai.github.io/langgraph/concepts/self_hosted/#self-hosted-enterprise).
-
-### Set up EAIA on LangGraph Cloud
+### Set up EAIA on LangGraph Platform
 
 1. Make sure you have a LangSmith Plus account
 2. Run the local setup first to create the Google OAuth provider (`python scripts/setup_gmail.py`)
@@ -129,22 +127,22 @@ If desired, you can always run EAIA in a self-hosted manner using LangGraph Plat
 
 ### Ingest manually
 
-Let's now kick off a manual ingest job to ingest some emails and run them through our LangGraph Cloud EAIA.
+Let's now kick off a manual ingest job to ingest some emails and run them through our LangGraph Platform EAIA.
 
-First, get your `LANGGRAPH_CLOUD_URL`
+First, get your `LANGGRAPH_DEPLOYMENT_URL`
 
 To kick off an ingest job, run:
 
 ```shell
-python scripts/run_ingest.py --minutes-since 120 --rerun 1 --early 0 --url ${LANGGRAPH-CLOUD-URL}
+python scripts/run_ingest.py --minutes-since 120 --rerun 1 --early 0 --url ${LANGGRAPH_DEPLOYMENT_URL}
 ```
 
 This will ingest all emails in the last 120 minutes (`--minutes-since`). It will NOT break early if it sees an email it already saw (`--early 0`) and it will
-rerun ones it has seen before (`--rerun 1`). It will run against the prod instance we have running (`--url ${LANGGRAPH-CLOUD-URL}`)
+rerun ones it has seen before (`--rerun 1`). It will run against the prod instance we have running (`--url ${LANGGRAPH_DEPLOYMENT_URL}`)
 
-### Set up Agent Inbox with LangGraph Cloud EAIA
+### Set up Agent Inbox with LangGraph Platform EAIA
 
-After we have [deployed it](#set-up-eaia-on-langgraph-cloud), we can interract with any results.
+After we have [deployed it](#set-up-eaia-on-langgraph-platform), we can interract with any results.
 
 1. Go to [Agent Inbox](https://dev.agentinbox.ai/)
 2. Connect this to your locally running EAIA agent:
@@ -161,7 +159,7 @@ You probably don't want to manually run ingest all the time. Using LangGraph Pla
 that runs on some schedule to check for new emails. You can set this up with:
 
 ```shell
-python scripts/setup_cron.py --url ${LANGGRAPH-CLOUD-URL}
+python scripts/setup_cron.py --url ${LANGGRAPH_DEPLOYMENT_URL}
 ```
 
 ## Advanced Options
