@@ -28,7 +28,7 @@ Table of contents
 2. Create a Python virtualenv and activate it (e.g. `pyenv virtualenv 3.11.1 eaia`, `pyenv activate eaia`)
 3. Run `pip install -e .` to install dependencies and the package
 
-### Set up credentials
+### Set up your credentials
 
 1. Export OpenAI API key (`export OPENAI_API_KEY=...`)
 2. Export Anthropic API key (`export ANTHROPIC_API_KEY=...`)
