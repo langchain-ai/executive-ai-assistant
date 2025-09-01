@@ -80,7 +80,7 @@ async def find_meeting_time(state: State, config: RunnableConfig):
         tz=prompt_config["timezone"],
     )
     messages = state.get("messages") or []
-    # we do this because theres currently a tool call just for routing
+    # we do this because there's currently a tool call just for routing
     messages = messages[:-1]
     result = await agent.ainvoke(
         {"messages": [{"role": "user", "content": input_message}] + messages}
