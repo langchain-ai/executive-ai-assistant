@@ -3,7 +3,7 @@ from langchain_core.tools import tool, InjectedToolCallId
 from langchain_core.messages import ToolMessage
 from langchain.agents.tool_node import InjectedState
 from langchain.agents.middleware import AgentMiddleware, ModelRequest
-from deepagents import create_deep_agent    
+from deepagents import async_create_deep_agent    
 from eaia.deepagent.google_utils import gmail_send_email, gmail_mark_as_read, google_calendar_list_events_for_date, google_calendar_create_event
 from eaia.deepagent.prompts import SYSTEM_PROMPT, EMAIL_INPUT_PROMPT, FIND_MEETING_TIME_SYSTEM_PROMPT
 from eaia.deepagent.types import EmailAgentState
@@ -16,6 +16,7 @@ from datetime import datetime
 
 @tool(description="Get feedback from the user on what to do with the email")
 def message_user(
+    question_for_user: str,
     state: Annotated[EmailAgentState, InjectedState],
     tool_call_id: Annotated[str, InjectedToolCallId]
 ) -> Command:
@@ -30,7 +31,7 @@ def message_user(
                     "allow_edit": False,
                     "description": description
                 },
-                "description": description
+                "description": f"{question_for_user}\n\n {description}"
             }
         ]
     )[0]
@@ -148,7 +149,7 @@ config_path = Path(__file__).parent / "config.yaml"
 with open(config_path, "r") as f:
     config = yaml.safe_load(f)
 
-agent = create_deep_agent(
+agent = async_create_deep_agent(
     tools=[message_user, write_email_response, start_new_email_thread, send_calendar_invite, mark_email_as_read],
     instructions=SYSTEM_PROMPT.format(
         full_name=config["full_name"],
@@ -182,19 +183,19 @@ agent = create_deep_agent(
             "allow_accept": True,
             "allow_respond": True,
             "allow_edit": True,
-            "description": "Write an email response to the user"
+            "description": "I've written an email response to the user. Please review it and make any necessary changes."
         },
         "start_new_email_thread": {
             "allow_accept": True,
             "allow_respond": True,
             "allow_edit": True,
-            "description": "Start a new email thread"
+            "description": "I've started a new email thread. Please review it and make any necessary changes."
         },
         "send_calendar_invite": {
             "allow_accept": True,
             "allow_respond": True,
             "allow_edit": True,
-            "description": "Send a calendar invite to create a meeting"
+            "description": "I'm looking to create a calendar invite to create a meeting. Please review it and make any necessary changes."
         }
     },
 ).with_config({"recursion_limit": 1000})
