@@ -36,6 +36,7 @@ async def get_credentials():
     print(auth_result)
     return Credentials(auth_result.token)
 
+
 def extract_message_part(msg):
     """Recursively walk through the email parts to find message body."""
     if msg["mimeType"] == "text/plain":
@@ -73,24 +74,6 @@ def create_message(
     return {"raw": raw, "threadId": thread_id} if thread_id else {"raw": raw}
 
 
-def get_recipients(headers, email_address, additional_recipients=None):
-    """Extract recipients from email headers."""
-    recipients = set(additional_recipients or [])
-    sender = None
-    for header in headers:
-        if header["name"].lower() in ["to", "cc"]:
-            recipients.update(header["value"].replace(" ", "").split(","))
-        if header["name"].lower() == "from":
-            sender = header["value"]
-    if sender:
-        recipients.add(sender)
-    # Remove the current user's email from recipients
-    for r in list(recipients):
-        if email_address in r:
-            recipients.remove(r)
-    return list(recipients)
-
-
 def format_datetime_with_timezone(dt_str, timezone="US/Pacific"):
     """Format a datetime string with the specified timezone."""
     dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
@@ -98,111 +81,6 @@ def format_datetime_with_timezone(dt_str, timezone="US/Pacific"):
     dt = dt.astimezone(tz)
     return dt.strftime("%Y-%m-%d %I:%M %p %Z")
 
-
-def print_events(events):
-    """Print calendar events in a human-readable format."""
-    if not events:
-        return "No events found for this day."
-
-    result = ""
-    for event in events:
-        start = event["start"].get("dateTime", event["start"].get("date"))
-        end = event["end"].get("dateTime", event["end"].get("date"))
-        summary = event.get("summary", "No Title")
-
-        if "T" in start:  # Only format if it's a datetime
-            start = format_datetime_with_timezone(start)
-            end = format_datetime_with_timezone(end)
-
-        result += f"Event: {summary}\n"
-        result += f"Starts: {start}\n"
-        result += f"Ends: {end}\n"
-        result += "-" * 40 + "\n"
-    return result
-
-
-
-async def gmail_read_emails(
-    max_results: int = 10,
-    query: str = "",
-    include_body: bool = False,
-) -> List[Dict]:
-    """Read emails from Gmail using the Gmail API.
-
-    Args:
-        context: Authentication context (automatically injected)
-        max_results: Maximum number of emails to retrieve (default: 10)
-        query: Gmail search query (optional, e.g., 'is:unread', 'from:someone@example.com')
-        include_body: Whether to include full email body content (default: False)
-
-    Returns:
-        List of emails with id, subject, from, snippet, and optionally body
-    """
-    from googleapiclient.discovery import build
-
-    credentials = await get_credentials()
-    service = build("gmail", "v1", credentials=credentials)
-
-    try:
-        results = (
-            service.users()
-            .messages()
-            .list(userId="me", q=query, maxResults=max_results)
-            .execute()
-        )
-
-        messages = results.get("messages", [])
-        emails = []
-
-        for message in messages:
-            msg_format = "full" if include_body else "metadata"
-            msg = (
-                service.users()
-                .messages()
-                .get(
-                    userId="me",
-                    id=message["id"],
-                    format=msg_format,
-                    metadataHeaders=["Subject", "From", "Date", "To", "Reply-To"]
-                    if not include_body
-                    else None,
-                )
-                .execute()
-            )
-
-            headers = msg.get("payload", {}).get("headers", [])
-            subject = next(
-                (h["value"] for h in headers if h["name"] == "Subject"), "No Subject"
-            )
-            from_addr = next(
-                (h["value"] for h in headers if h["name"] == "From"), "Unknown Sender"
-            )
-            date = next((h["value"] for h in headers if h["name"] == "Date"), "")
-            to_addr = next((h["value"] for h in headers if h["name"] == "To"), "")
-            reply_to = next(
-                (h["value"] for h in headers if h["name"] == "Reply-To"), ""
-            )
-
-            email_data = {
-                "id": message["id"],
-                "thread_id": message.get("threadId"),
-                "subject": subject,
-                "from": reply_to if reply_to else from_addr,
-                "to": to_addr,
-                "date": date,
-                "snippet": msg.get("snippet", ""),
-            }
-
-            if include_body:
-                body = extract_message_part(msg.get("payload", {}))
-                email_data["body"] = body
-
-            emails.append(email_data)
-
-        return emails
-
-    except Exception as e:
-        return [{"error": f"Failed to read emails: {str(e)}"}]
 
 @traceable
 async def gmail_send_email(
@@ -260,6 +138,7 @@ async def gmail_send_email(
     except Exception as e:
         return {"success": False, "error": f"Failed to send email: {str(e)}"}
 
+
 @traceable
 async def gmail_mark_as_read(
     message_id: str,
@@ -288,58 +167,6 @@ async def gmail_mark_as_read(
     except Exception as e:
         return {"success": False, "error": f"Failed to mark as read: {str(e)}"}
 
-@traceable
-async def gmail_get_thread(
-    thread_id: str,
-) -> List[Dict]:
-    """Get all messages in a Gmail thread.
-
-    Args:
-        context: Authentication context (automatically injected)
-        thread_id: ID of the thread to retrieve
-
-    Returns:
-        List of messages in the thread with full details
-    """
-    from googleapiclient.discovery import build
-
-    credentials = await get_credentials()
-    service = build("gmail", "v1", credentials=credentials)
-
-    try:
-        thread = service.users().threads().get(userId="me", id=thread_id).execute()
-        messages = thread.get("messages", [])
-
-        thread_messages = []
-        for msg in messages:
-            headers = msg.get("payload", {}).get("headers", [])
-            subject = next(
-                (h["value"] for h in headers if h["name"] == "Subject"), "No Subject"
-            )
-            from_addr = next(
-                (h["value"] for h in headers if h["name"] == "From"), "Unknown Sender"
-            )
-            date = next((h["value"] for h in headers if h["name"] == "Date"), "")
-            to_addr = next((h["value"] for h in headers if h["name"] == "To"), "")
-
-            body = extract_message_part(msg.get("payload", {}))
-
-            thread_messages.append(
-                {
-                    "id": msg["id"],
-                    "subject": subject,
-                    "from": from_addr,
-                    "to": to_addr,
-                    "date": date,
-                    "body": body,
-                    "snippet": msg.get("snippet", ""),
-                }
-            )
-
-        return thread_messages
-
-    except Exception as e:
-        return [{"error": f"Failed to get thread: {str(e)}"}]
 
 @traceable
 async def google_calendar_list_events_for_date(
@@ -403,6 +230,7 @@ async def google_calendar_list_events_for_date(
     except Exception as e:
         logger.error(f"Failed to get calendar events: {str(e)}")
         return [{"error": f"Failed to get calendar events: {str(e)}"}]
+
 
 @traceable
 async def google_calendar_create_event(

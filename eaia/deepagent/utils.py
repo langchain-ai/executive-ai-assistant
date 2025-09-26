@@ -28,10 +28,8 @@ async def send_slack_message(state, config):
     userId = config["configurable"].get("slack_user_id", None)
     if userId is None:
         return
-
     if state["notified"]:
         return
-
     response = await client.conversations_open(users=[userId])
     channel_id = response["channel"]["id"]
 
