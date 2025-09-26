@@ -7,9 +7,11 @@ import httpx
 import langsmith as ls
 from langgraph.graph import END, START, StateGraph
 from langgraph_sdk import get_client
-
+from langchain_core.messages import HumanMessage
 from eaia.gmail import fetch_group_emails
 from eaia.main.config import get_config
+from dotenv import load_dotenv
+load_dotenv("../.env")
 
 client = get_client()
 
@@ -26,7 +28,7 @@ async def main(state: JobKickoff, config):
     assistant_id = state["assistant_id"]
     # TODO: This really should be async
     count = 0
-    for email in fetch_group_emails(
+    async for email in fetch_group_emails(
         email, minutes_since=minutes_since, assistant_id=assistant_id
     ):
         thread_id = str(
@@ -56,9 +58,11 @@ async def main(state: JobKickoff, config):
                 await client.threads.update_state(thread_id, None, as_node="__end__")
                 continue
             recent_email = thread_info["metadata"].get("email_id")
-            if recent_email == email["id"]:
-                rt.metadata["end_reason"] = "duplicate"
-                break
+            # TODO: Add this back in later
+            # if recent_email == email["id"]:
+            #     print(f"Duplicate email: {email}")
+            #     rt.metadata["end_reason"] = "duplicate"
+            #     continue
             await client.threads.update(thread_id, metadata={"email_id": email["id"]})
             rt.metadata["end_reason"] = "success"
             rt.add_outputs({"email": email})
@@ -66,7 +70,7 @@ async def main(state: JobKickoff, config):
             await client.runs.create(
                 thread_id,
                 assistant_id,
-                input={"email": email},
+                input={"email": email, "messages": HumanMessage(content="Decide what the best actions are, and handle this new email that just came in.")},
                 multitask_strategy="rollback",
                 config={"configurable": {"email": email["to_email"]}},
             )

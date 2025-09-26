@@ -34,6 +34,17 @@ _SECRETS_DIR = _ROOT / ".secrets"
 _SECRETS_PATH = str(_SECRETS_DIR / "secrets.json")
 _TOKEN_PATH = str(_SECRETS_DIR / "token.json")
 
+import os
+async def get_credentials_langsmith():
+    from langchain_auth import Client
+    client = Client(api_key=os.environ["LANGSMITH_API_KEY"])
+    auth_result = await client.authenticate(
+        provider="google-oap-prod",
+        scopes=_SCOPES,
+        user_id=os.environ["EMAIL"]
+    )
+    from google.oauth2.credentials import Credentials
+    return Credentials(auth_result.token)
 
 def get_credentials(assistant_id, interactive: bool = False):
     from arcadepy import Arcade
@@ -164,14 +175,19 @@ def send_email(
     send_message(service, "me", response_message)
 
 
-def fetch_group_emails(
+async def fetch_group_emails(
     to_email,
     minutes_since: int = 30,
     gmail_token: str | None = None,
     gmail_secret: str | None = None,
     assistant_id=None,
 ) -> Iterable[EmailData]:
-    creds = get_credentials(assistant_id)
+    # creds = get_credentials(assistant_id)
+    try:
+        creds = await get_credentials_langsmith()
+    except Exception as e:
+        print(f"Error getting credentials: {e}")
+        raise
     after = int((datetime.now() - timedelta(minutes=minutes_since)).timestamp())
     with ls.trace(
         "Fetching emails",
@@ -228,11 +244,15 @@ def fetch_group_emails(
                     if header["name"] == "From"
                 )
                 if to_email in last_from_header:
-                    yield {
-                        "id": message["id"],
-                        "thread_id": message["threadId"],
-                        "user_respond": True,
-                    }
+                    try:
+                        yield {
+                            "id": message["id"],
+                            "thread_id": message["threadId"],
+                            "user_respond": True,
+                        }
+                    except GeneratorExit:
+                        logger.debug("Generator closed by consumer")
+                        return
                 # Check if the last message was from you and if the current message is the last in the thread
                 if to_email not in from_header and message["id"] == last_message["id"]:
                     subject = next(
@@ -273,16 +293,25 @@ def fetch_group_emails(
                     # Only process emails that are less than an hour old
                     parsed_time = parse_time(send_time)
                     body = extract_message_part(payload)
-                    yield {
-                        "from_email": from_email,
-                        "to_email": _to_email,
-                        "subject": subject,
-                        "page_content": body,
-                        "id": message["id"],
-                        "thread_id": message["threadId"],
-                        "send_time": parsed_time.isoformat(),
-                    }
-                    count += 1
+                    try:
+                        yield {
+                            "from_email": from_email,
+                            "to_email": _to_email,
+                            "subject": subject,
+                            "page_content": body,
+                            "id": message["id"],
+                            "thread_id": message["threadId"],
+                            "send_time": parsed_time.isoformat(),
+                        }
+                        count += 1
+                    except GeneratorExit:
+                        # This is normal when the consumer stops iterating
+                        logger.debug("Generator closed by consumer")
+                        return
+            except GeneratorExit:
+                # Handle GeneratorExit at the outer level
+                logger.debug("Generator closed by consumer")
+                return
             except Exception as e:
                 rt.error = str(e)
                 print(f"Failed on {message}")
