@@ -58,11 +58,10 @@ async def main(state: JobKickoff, config):
                 await client.threads.update_state(thread_id, None, as_node="__end__")
                 continue
             recent_email = thread_info["metadata"].get("email_id")
-            # TODO: Add this back in later
-            # if recent_email == email["id"]:
-            #     print(f"Duplicate email: {email}")
-            #     rt.metadata["end_reason"] = "duplicate"
-            #     continue
+            if recent_email == email["id"]:
+                print(f"Duplicate email: {email}")
+                rt.metadata["end_reason"] = "duplicate"
+                continue
             await client.threads.update(thread_id, metadata={"email_id": email["id"]})
             rt.metadata["end_reason"] = "success"
             rt.add_outputs({"email": email})

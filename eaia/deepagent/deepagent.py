@@ -19,6 +19,7 @@ def message_user(
     state: Annotated[EmailAgentState, InjectedState],
     tool_call_id: Annotated[str, InjectedToolCallId]
 ) -> Command:
+    description = generate_email_markdown(state["email"])
     response = interrupt(
         [
             {
@@ -27,8 +28,9 @@ def message_user(
                     "allow_respond": True,
                     "allow_accept": False,
                     "allow_edit": False,
-                    "description": generate_email_markdown(state["email"])
-                }
+                    "description": description
+                },
+                "description": description
             }
         ]
     )[0]
@@ -50,7 +52,7 @@ async def write_email_response(
     new_recipients: list[str],
     state: Annotated[EmailAgentState, InjectedState],
 ):
-    recipients = [state["email"]["to_email"]]
+    recipients = [state["email"]["from_email"]]
     if isinstance(new_recipients, str):
         new_recipients = json.loads(new_recipients)
         if len(new_recipients) == 0:
