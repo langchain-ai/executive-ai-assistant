@@ -2,17 +2,22 @@ from langgraph.types import interrupt, Command
 from langchain_core.tools import tool, InjectedToolCallId
 from langchain_core.messages import ToolMessage
 from langchain.agents.tool_node import InjectedState
-from langchain.agents.middleware import AgentMiddleware, ModelRequest
+from langchain.agents.middleware import AgentMiddleware, AgentState, ModelRequest
 from deepagents import async_create_deep_agent    
 from eaia.deepagent.google_utils import gmail_send_email, gmail_mark_as_read, google_calendar_list_events_for_date, google_calendar_create_event
 from eaia.deepagent.prompts import SYSTEM_PROMPT, EMAIL_INPUT_PROMPT, FIND_MEETING_TIME_SYSTEM_PROMPT
-from eaia.deepagent.types import EmailAgentState
-from eaia.deepagent.utils import generate_email_markdown, send_slack_message
+from eaia.deepagent.types import EmailAgentState, NotifiedState
+from eaia.deepagent.utils import generate_email_markdown, SLACK_MSG_TEMPLATE
 import yaml
-from typing import Annotated
+from typing import Annotated, Any
 from pathlib import Path
 import json
 from datetime import datetime
+from slack_sdk.web.async_client import AsyncWebClient
+import os
+from dotenv import load_dotenv
+load_dotenv("../.env")
+
 
 @tool(description="Get feedback from the user on what to do with the email")
 def message_user(
@@ -141,8 +146,30 @@ class EmailAgentMiddleware(AgentMiddleware):
 
 
 class NotifyUserViaSlackMiddleware(AgentMiddleware):
-    # TODO: Implement this later, low priority
-    pass
+    state_schema = NotifiedState
+    async def after_model(self, state: NotifiedState) -> NotifiedState | None:
+        messages = state["messages"]
+        notified = state["notified"] if "notified" in state else False
+        # We only want this to execute on the first AI Message
+        if not messages or len(messages) > 2 or notified:
+            return
+        last_message = messages[-1]
+        userId = os.environ["SLACK_USER_ID"]
+        if last_message.type != "ai" or userId is None:
+            return
+        if "mark_email_as_read" not in [tool_call["name"] for tool_call in last_message.tool_calls]:
+            client = AsyncWebClient(token=os.environ["SLACK_BOT_TOKEN"])
+            response = await client.conversations_open(users=[userId])
+            channel_id = response["channel"]["id"]
+
+            await client.chat_postMessage(
+                channel=channel_id,
+                text=SLACK_MSG_TEMPLATE.format(
+                    _from=state["email"]["from_email"],
+                    subject=state["email"]["subject"]
+                ),
+            )
+            return {"notified": True}
 
 class AddFileToSystemPromptMiddleware(AgentMiddleware):
     def __init__(self, files_to_inject: list[str]):
@@ -193,7 +220,11 @@ agent = async_create_deep_agent(
             "middleware": [EmailAgentMiddleware()]
         }
     ],
-    middleware=[EmailAgentMiddleware(), AddFileToSystemPromptMiddleware(files_to_inject=["email.txt"])],
+    middleware=[
+        EmailAgentMiddleware(),
+        AddFileToSystemPromptMiddleware(files_to_inject=["email.txt"]),
+        NotifyUserViaSlackMiddleware()
+    ],
     tool_configs={
         "write_email_response": {
             "allow_accept": True,

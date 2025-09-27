@@ -12,3 +12,6 @@ class EmailData(TypedDict):
 
 class EmailAgentState(AgentState):
     email: EmailData
+
+class NotifiedState(AgentState):
+    notified: bool = False

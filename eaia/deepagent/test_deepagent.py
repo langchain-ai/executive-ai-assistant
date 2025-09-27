@@ -49,6 +49,21 @@ async def main():
     print(response)
 
 import asyncio
+# from slack_sdk.web.async_client import AsyncWebClient
+# import os
+
+# async def send_slack_msg():
+#     userId = os.environ["SLACK_USER_ID"]
+#     client = AsyncWebClient(token=os.environ["SLACK_BOT_TOKEN"])
+#     response = await client.conversations_open(users=[userId])
+#     print(response)
+#     channel_id = response["channel"]["id"]
+
+#     response2 = await client.chat_postMessage(
+#         channel=channel_id,
+#         text="Sample msg",
+#     )
+#     print(response2)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(send_slack_msg())
