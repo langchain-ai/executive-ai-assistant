@@ -182,7 +182,6 @@ async def fetch_group_emails(
     gmail_secret: str | None = None,
     assistant_id=None,
 ) -> Iterable[EmailData]:
-    # creds = get_credentials(assistant_id)
     try:
         creds = await get_credentials_langsmith()
     except Exception as e:

@@ -128,22 +128,38 @@ async def get_events_for_days(
 
 class EmailAgentMiddleware(AgentMiddleware):
     state_schema=EmailAgentState
-
-    def modify_model_request(self, model_request: ModelRequest, agent_state: EmailAgentState) -> ModelRequest:
-        hydrated_prompt = EMAIL_INPUT_PROMPT.format(
-            author=agent_state["email"]["from_email"],
-            to=agent_state["email"].get("to_email", ""),
-            subject=agent_state["email"]["subject"],
-            email_thread=agent_state["email"]["page_content"]
-        )
-        model_request.system_prompt = model_request.system_prompt + "\n\n" + hydrated_prompt
-        return model_request
+    # NOTE: Commenting this out in favor of the AddFileToSystemPromptMiddleware
+    # def modify_model_request(self, model_request: ModelRequest, agent_state: EmailAgentState) -> ModelRequest:
+    #     hydrated_prompt = EMAIL_INPUT_PROMPT.format(
+    #         author=agent_state["email"]["from_email"],
+    #         to=agent_state["email"].get("to_email", ""),
+    #         subject=agent_state["email"]["subject"],
+    #         email_thread=agent_state["email"]["page_content"]
+    #     )
+    #     model_request.system_prompt = model_request.system_prompt + "\n\n" + hydrated_prompt
+    #     return model_request
 
 
 class NotifyUserViaSlackMiddleware(AgentMiddleware):
-    # TODO: Implement this later
+    # TODO: Implement this later, low priority
     pass
 
+class AddFileToSystemPromptMiddleware(AgentMiddleware):
+    def __init__(self, files_to_inject: list[str]):
+        self.files_to_inject = files_to_inject
+
+    def modify_model_request(self, model_request: ModelRequest, agent_state: dict) -> ModelRequest:
+        if "files" not in agent_state:
+            print("No files in State - something went wrong")
+            return model_request
+        files_str = "Here are some relevant files that are accessible in your filesystem: \n\n"
+        for file in self.files_to_inject:
+            if file in agent_state["files"]:
+                files_str += f"{file}\n"
+                files_str += f"{agent_state['files'][file]}\n"
+                files_str += f"{'-'*30}\n"
+        model_request.system_prompt = model_request.system_prompt + "\n\n" + files_str
+        return model_request
 
 config_path = Path(__file__).parent / "config.yaml"
 with open(config_path, "r") as f:
@@ -177,7 +193,7 @@ agent = async_create_deep_agent(
             "middleware": [EmailAgentMiddleware()]
         }
     ],
-    middleware=[EmailAgentMiddleware()],
+    middleware=[EmailAgentMiddleware(), AddFileToSystemPromptMiddleware(files_to_inject=["email.txt"])],
     tool_configs={
         "write_email_response": {
             "allow_accept": True,

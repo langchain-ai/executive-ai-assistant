@@ -10,6 +10,7 @@ from langgraph_sdk import get_client
 from langchain_core.messages import HumanMessage
 from eaia.gmail import fetch_group_emails
 from eaia.main.config import get_config
+from eaia.deepagent.utils import FILE_TEMPLATE
 from dotenv import load_dotenv
 load_dotenv("../.env")
 
@@ -24,6 +25,7 @@ class JobKickoff(TypedDict):
 
 async def main(state: JobKickoff, config):
     minutes_since: int = state["minutes_since"]
+    print(config)
     email = get_config(config)["email"]
     assistant_id = state["assistant_id"]
     # TODO: This really should be async
@@ -66,18 +68,37 @@ async def main(state: JobKickoff, config):
             rt.metadata["end_reason"] = "success"
             rt.add_outputs({"email": email})
             count += 1
+
+            # Pass in email through the filesystem as well as state
+            email_str = FILE_TEMPLATE.format(
+                id=email["id"],
+                thread_id=email["thread_id"],
+                send_time=email["send_time"],
+                subject=email["subject"],
+                to=email["to_email"],
+                _from=email["from_email"],
+                page_content=email["page_content"],
+            )
             await client.runs.create(
                 thread_id,
                 assistant_id,
-                input={"email": email, "messages": HumanMessage(content="Decide what the best actions are, and handle this new email that just came in.")},
+                input={
+                    "email": email,
+                    "messages": HumanMessage(content="Decide what the best actions are, and handle this new email that just came in."),
+                    "files": {
+                        "email.txt": email_str
+                    }
+                },
                 multitask_strategy="rollback",
-                config={"configurable": {"email": email["to_email"]}},
+                config={"configurable": {"email": email["to_email"]}, "recursion_limit": 1000},
             )
 
     return {"count": count}
 
+class EmailConfig:
+    email: str
 
-graph = StateGraph(JobKickoff)
+graph = StateGraph(JobKickoff, EmailConfig)
 graph.add_node(main)
 graph.add_edge(START, "main")
 graph.add_edge("main", END)

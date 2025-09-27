@@ -14,6 +14,20 @@ TEMPLATE = """# {subject}
 {page_content}
 """
 
+FILE_TEMPLATE = """
+id: {id}
+thread_id: {thread_id}
+send_time: {send_time}
+
+<email>
+**To**: {to}
+**From**: {_from}
+# {subject}
+
+{page_content}
+</email>
+"""
+
 def generate_email_markdown(email: dict):
     return TEMPLATE.format(
         subject=email["subject"],
