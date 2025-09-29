@@ -30,7 +30,7 @@ _SCOPES = [
 
 async def get_credentials():
     from langchain_auth import Client
-    client = Client(api_key=os.environ["LANGSMITH_API_KEY"])
+    client = Client(api_key=os.environ["LANGCHAIN_API_KEY"])
     auth_result = await client.authenticate(
         provider="google-oap-prod",
         scopes=_SCOPES,
