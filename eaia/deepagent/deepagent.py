@@ -6,16 +6,15 @@ from langchain.agents.middleware import AgentMiddleware, ModelRequest
 from deepagents import async_create_deep_agent    
 from eaia.deepagent.google_utils import gmail_send_email, gmail_mark_as_read, google_calendar_list_events_for_date, google_calendar_create_event
 from eaia.deepagent.prompts import SYSTEM_PROMPT, FIND_MEETING_TIME_SYSTEM_PROMPT
-from eaia.deepagent.types import EmailAgentState, NotifiedState
+from eaia.deepagent.types import EmailAgentState, NotifiedState, EmailConfigSchema
 from eaia.deepagent.utils import generate_email_markdown, SLACK_MSG_TEMPLATE
-import yaml
+from langchain_core.runnables import RunnableConfig
 from typing import Annotated
-from pathlib import Path
 import json
-from datetime import datetime
 from slack_sdk.web.async_client import AsyncWebClient
 import os
 from dotenv import load_dotenv
+from datetime import datetime
 load_dotenv("../.env")
 
 
@@ -188,61 +187,67 @@ class AddFileToSystemPromptMiddleware(AgentMiddleware):
         model_request.system_prompt = model_request.system_prompt + "\n\n" + files_str
         return model_request
 
-config_path = Path(__file__).parent / "config.yaml"
-with open(config_path, "r") as f:
-    config = yaml.safe_load(f)
+async def get_deepagent(config: RunnableConfig):
+    configurable = config.get("configurable", {})
+    graph_config = EmailConfigSchema(**configurable)
+    instructions = SYSTEM_PROMPT.format(
+        full_name=graph_config.full_name,
+        name=graph_config.name,
+        background=graph_config.background,
+        schedule_preferences=graph_config.schedule_preferences,
+        background_preferences=graph_config.background_preferences,
+        triage_no=graph_config.triage_no,
+        triage_notify=graph_config.triage_notify,
+        triage_respond=graph_config.triage_respond,
+        writing_preferences=graph_config.writing_preferences,
+        timezone=graph_config.timezone,
+    )
+    find_meeting_times_instructions = FIND_MEETING_TIME_SYSTEM_PROMPT.format(
+        full_name=graph_config.full_name,
+        name=graph_config.name,
+        background=graph_config.background,
+        timezone=graph_config.timezone,
+        schedule_preferences=graph_config.schedule_preferences,
+        current_date=datetime.now().strftime("%Y-%m-%d")
+    )
 
-agent = async_create_deep_agent(
-    tools=[message_user, write_email_response, start_new_email_thread, send_calendar_invite, mark_email_as_read],
-    instructions=SYSTEM_PROMPT.format(
-        full_name=config["full_name"],
-        name=config["name"],
-        background=config["background"],
-        triage_no=config["triage_no"],
-        triage_email=config["triage_email"],
-        triage_notify=config["triage_notify"],
-        response_preferences=config["response_preferences"],
-        background_preferences=config["background_preferences"]
-    ),
-    subagents=[
-        {
-            "name": "find_meeting_times",
-            "description": "This agent is responsible for finding the best available meeting times for the user.",
-            "prompt": FIND_MEETING_TIME_SYSTEM_PROMPT.format(
-                full_name=config["full_name"],
-                name=config["name"],
-                background=config["background"],
-                timezone=config["timezone"],
-                schedule_preferences=config["schedule_preferences"],
-                current_date=datetime.now().strftime("%Y-%m-%d")
-            ),
-            "tools": [get_events_for_days],
-            "middleware": [EmailAgentMiddleware()]
-        }
-    ],
-    middleware=[
-        EmailAgentMiddleware(),
-        AddFileToSystemPromptMiddleware(files_to_inject=["email.txt"]),
-        NotifyUserViaSlackMiddleware()
-    ],
-    tool_configs={
-        "write_email_response": {
-            "allow_accept": True,
-            "allow_respond": True,
-            "allow_edit": True,
-            "description": "I've written an email response to the user. Please review it and make any necessary changes."
+    agent = async_create_deep_agent(
+        tools=[message_user, write_email_response, start_new_email_thread, send_calendar_invite, mark_email_as_read],
+        instructions=instructions,
+        subagents=[
+            {
+                "name": "find_meeting_times",
+                "description": "This agent is responsible for finding the best available meeting times for the user.",
+                "prompt": find_meeting_times_instructions,
+                "tools": [get_events_for_days],
+                "middleware": [EmailAgentMiddleware()]
+            }
+        ],
+        middleware=[
+            EmailAgentMiddleware(),
+            AddFileToSystemPromptMiddleware(files_to_inject=["email.txt"]),
+            NotifyUserViaSlackMiddleware()
+        ],
+        tool_configs={
+            "write_email_response": {
+                "allow_accept": True,
+                "allow_respond": True,
+                "allow_edit": True,
+                "description": "I've written an email response to the user. Please review it and make any necessary changes."
+            },
+            "start_new_email_thread": {
+                "allow_accept": True,
+                "allow_respond": True,
+                "allow_edit": True,
+                "description": "I've started a new email thread. Please review it and make any necessary changes."
+            },
+            "send_calendar_invite": {
+                "allow_accept": True,
+                "allow_respond": True,
+                "allow_edit": True,
+                "description": "I'm looking to create a calendar invite to create a meeting. Please review it and make any necessary changes."
+            }
         },
-        "start_new_email_thread": {
-            "allow_accept": True,
-            "allow_respond": True,
-            "allow_edit": True,
-            "description": "I've started a new email thread. Please review it and make any necessary changes."
-        },
-        "send_calendar_invite": {
-            "allow_accept": True,
-            "allow_respond": True,
-            "allow_edit": True,
-            "description": "I'm looking to create a calendar invite to create a meeting. Please review it and make any necessary changes."
-        }
-    },
-).with_config({"recursion_limit": 1000})
+        context_schema=EmailConfigSchema
+    ).with_config({"recursion_limit": 1000})
+    return agent

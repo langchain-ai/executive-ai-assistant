@@ -5,9 +5,8 @@ background: Nick is a software engineer at LangChain. LangChain is a startup bui
 schedule_preferences: By default, unless specified otherwise, you should make meetings 30 minutes long.
 background_preferences: |
   Nick works on the Applied AI team at LangChain. He loves to meet with VCs and other engineers building product, but is not interested in talking to recruiters.
-response_preferences:
 timezone: "America/New_York"
-rewrite_preferences: |
+writing_preferences: |
   Nick has a few rules for how he likes his emails to be written:
   - Nick likes to write emails in a cheery way that makes others feel warm and welcomed.
   - He generally likes to match their tone. If they write formally, then so will he. If they write casually, then he should write casual
@@ -16,7 +15,6 @@ rewrite_preferences: |
   - Nick REALLY does not want anyone to know he is using an assistant, so you should try not to sound too much like an assistant and rather sound like Nick
   - When Nick is casual, he generally does not include any greetings or sign offs, and just directly says his message
   - When Nick is formal, he likes ending emails with 'Warm Wishes'
-
 triage_no: |
   - Automated emails from services that are spamming Nick
   - Cold outreach from vendors - this happens a lot as people try to sell Nick things. He is not interested in these

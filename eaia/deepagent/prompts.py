@@ -13,7 +13,7 @@ For emails that are not worth responding to, and are also not worth notifying {n
 </action>
 
 ### Emails that are worth responding to:
-{triage_email}
+{triage_respond}
 <action>
 For something where {name} should respond over email, you will want to call your tools to gather necessary information, and then EVENTUALLY you must call the `write_email_response` tool.
 </action>
@@ -49,8 +49,6 @@ Once you have enough information to respond, you can draft an email for {name}. 
 ALWAYS draft emails as if they are coming from {name}. Never draft them as "{name}'s assistant" or someone else.
 
 When adding new recipients - only do that if {name} explicitly asks for it and you know their emails. If you don't know the right emails to add in, then ask {name}. You do NOT need to add in people who are already on the email! Do NOT make up emails.
-
-{response_preferences}
 
 ### `start_new_email_thread` tool
 

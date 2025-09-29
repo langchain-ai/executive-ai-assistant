@@ -7,9 +7,9 @@ import httpx
 import langsmith as ls
 from langgraph.graph import END, START, StateGraph
 from langgraph_sdk import get_client
+from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import HumanMessage
 from eaia.deepagent.google_utils import fetch_group_emails
-from eaia.main.config import get_config
 from eaia.deepagent.utils import FILE_TEMPLATE
 from dotenv import load_dotenv
 load_dotenv("../.env")
@@ -19,16 +19,24 @@ client = get_client()
 
 class JobKickoff(TypedDict):
     minutes_since: int
+    assistant_id: str
     count: Annotated[int, operator.add]
 
 
-async def main(state: JobKickoff, config):
+async def main(state: JobKickoff, config: RunnableConfig):
     minutes_since: int = state["minutes_since"]
-    email = get_config(config)["email"]
-    # TODO: This really should be async
+    assistant_id = state["assistant_id"]
+    try:
+        assistant = await client.assistants.get(assistant_id)
+    except httpx.HTTPStatusError as e:
+        raise e
+    assistant_config = assistant["config"]["configurable"]
+    user_email = assistant_config["email"]
+    if not user_email:
+        raise ValueError("Email is not set in the assistant config")
     count = 0
     async for email in fetch_group_emails(
-        email, minutes_since=minutes_since
+        user_email, minutes_since=minutes_since
     ):
         thread_id = str(
             uuid.UUID(hex=hashlib.md5(email["thread_id"].encode("UTF-8")).hexdigest())
@@ -78,7 +86,7 @@ async def main(state: JobKickoff, config):
             )
             await client.runs.create(
                 thread_id,
-                "deepagent",
+                assistant_id,
                 input={
                     "email": email,
                     "messages": HumanMessage(content="Decide what the best actions are, and handle this new email that just came in."),
@@ -87,15 +95,12 @@ async def main(state: JobKickoff, config):
                     }
                 },
                 multitask_strategy="rollback",
-                config={"configurable": {"email": email["to_email"]}, "recursion_limit": 1000},
+                config={**assistant_config, "recursion_limit": 1000},
             )
 
     return {"count": count}
 
-class EmailConfig:
-    email: str
-
-graph = StateGraph(JobKickoff, EmailConfig)
+graph = StateGraph(JobKickoff)
 graph.add_node(main)
 graph.add_edge(START, "main")
 graph.add_edge("main", END)
