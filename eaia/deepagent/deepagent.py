@@ -70,7 +70,7 @@ async def write_email_response(
             subject=state["email"]["subject"],
             body=content,
             reply_to_message_id=state["email"]["id"],
-            user_email=runtime.context.get("email")
+            user_email=runtime.context.email
         )
     except Exception as e:
         return f"Error sending email: {e}"
@@ -89,7 +89,7 @@ async def start_new_email_thread(
             to=",".join(recipients),
             subject=subject,
             body=content,
-            user_email=runtime.context.get("email")
+            user_email=runtime.context.email
         )
     except Exception as e:
         return f"Error sending email: {e}"
@@ -111,7 +111,7 @@ async def send_calendar_invite(
             end_time=end_time,
             attendee_emails=emails,
             timezone=timezone,  
-            user_email=runtime.context.get("email")
+            user_email=runtime.context.email
         )
     except Exception as e:
         return f"Error creating calendar event: {e}"
@@ -123,7 +123,7 @@ async def mark_email_as_read(
 ):
     runtime = get_runtime(EmailConfigSchema)
     try:
-        await gmail_mark_as_read(state["email"]["id"], runtime.context.get("email"))
+        await gmail_mark_as_read(state["email"]["id"], runtime.context.email)
     except Exception as e:
         return f"Error marking email as read: {e}"
     return "Successfully marked an email as read"
@@ -134,7 +134,7 @@ async def get_events_for_days(
 ):
     runtime = get_runtime(EmailConfigSchema)
     try:
-        events = await google_calendar_list_events_for_date(date_str, runtime.context.get("email"))
+        events = await google_calendar_list_events_for_date(date_str, runtime.context.email)
         return events
     except Exception as e:
         return f"Error getting events for day: {e}"

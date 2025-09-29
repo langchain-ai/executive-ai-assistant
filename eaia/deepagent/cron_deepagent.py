@@ -35,11 +35,9 @@ async def main(state: JobKickoff, config: RunnableConfig):
     if not user_email:
         raise ValueError("Email is not set in the assistant config")
     count = 0
-    print("Assistant config!!!!!:", assistant_config)
     async for email in fetch_group_emails(
         user_email, minutes_since=minutes_since
     ):
-        print("Got email!!!!!:", email)
         thread_id = str(
             uuid.UUID(hex=hashlib.md5(email["thread_id"].encode("UTF-8")).hexdigest())
         )
