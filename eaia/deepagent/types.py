@@ -19,6 +19,7 @@ class NotifiedState(AgentState):
 
 class EmailConfigSchema(BaseModel):
     email: str = Field(description="Your email address", default="")
+    slack_user_id: str = Field(description="Your Slack user ID", default="")
     full_name: str = Field(description="Your full name", default="")
     name: str = Field(description="Your first name", default="")
     background: str = Field(description="A brief description of your personal background", default="")

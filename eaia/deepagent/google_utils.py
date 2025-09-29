@@ -28,13 +28,13 @@ _SCOPES = [
     "https://www.googleapis.com/auth/gmail.modify",
 ]
 
-async def get_credentials():
+async def get_credentials(user_email: str):
     from langchain_auth import Client
     client = Client(api_key=os.environ["LANGCHAIN_API_KEY"])
     auth_result = await client.authenticate(
         provider="google-oap-prod",
         scopes=_SCOPES,
-        user_id=os.environ["EMAIL"]
+        user_id=user_email
     )
     from google.oauth2.credentials import Credentials
     print(auth_result)
@@ -92,6 +92,7 @@ async def gmail_send_email(
     subject: str,
     body: str,
     reply_to_message_id: Optional[str] = None,
+    user_email: str = "me",
 ) -> Dict[str, str]:
     """Send an email via Gmail.
 
@@ -107,7 +108,7 @@ async def gmail_send_email(
     """
     from googleapiclient.discovery import build
 
-    credentials = await get_credentials()
+    credentials = await get_credentials(user_email)
     service = build("gmail", "v1", credentials=credentials)
 
     try:
@@ -146,6 +147,7 @@ async def gmail_send_email(
 @traceable
 async def gmail_mark_as_read(
     message_id: str,
+    user_email: str = "me",
 ) -> Dict[str, str]:
     """Mark a Gmail message as read.
 
@@ -158,7 +160,7 @@ async def gmail_mark_as_read(
     """
     from googleapiclient.discovery import build
 
-    credentials = await get_credentials()
+    credentials = await get_credentials(user_email)
     service = build("gmail", "v1", credentials=credentials)
 
     try:
@@ -175,6 +177,7 @@ async def gmail_mark_as_read(
 @traceable
 async def google_calendar_list_events_for_date(
     date_str: str,
+    user_email: str = "me",
 ) -> List[Dict]:
     """List Google Calendar events for a specific day with basic info and event IDs.
 
@@ -187,7 +190,7 @@ async def google_calendar_list_events_for_date(
     """
     from googleapiclient.discovery import build
 
-    credentials = await get_credentials()
+    credentials = await get_credentials(user_email)
     service = build("calendar", "v3", credentials=credentials)
 
     try:
@@ -243,6 +246,7 @@ async def google_calendar_create_event(
     end_time: str,
     attendee_emails: List[str],
     timezone: str = "UTC",
+    user_email: str = "me",
 ) -> Dict[str, str]:
     """Create a Google Calendar event with meeting invite.
 
@@ -259,7 +263,7 @@ async def google_calendar_create_event(
     """
     from googleapiclient.discovery import build
 
-    credentials = await get_credentials()
+    credentials = await get_credentials(user_email)
     service = build("calendar", "v3", credentials=credentials)
 
     try:
@@ -318,8 +322,9 @@ async def google_calendar_create_event(
 async def fetch_group_emails(
     to_email,
     minutes_since: int = 30,
+    user_email: str = "me",
 ) -> Iterable[EmailData]:
-    creds = await get_credentials()
+    creds = await get_credentials(user_email)
     after = int((datetime.now() - timedelta(minutes=minutes_since)).timestamp())
     with ls.trace(
         "Fetching emails",
@@ -339,6 +344,7 @@ async def fetch_group_emails(
                 .list(userId="me", q=query, pageToken=nextPageToken)
                 .execute()
             )
+            print("Results!!!!!:", results)
             if "messages" in results:
                 messages.extend(results["messages"])
             nextPageToken = results.get("nextPageToken")

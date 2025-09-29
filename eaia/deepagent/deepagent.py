@@ -9,12 +9,13 @@ from eaia.deepagent.prompts import SYSTEM_PROMPT, FIND_MEETING_TIME_SYSTEM_PROMP
 from eaia.deepagent.types import EmailAgentState, NotifiedState, EmailConfigSchema
 from eaia.deepagent.utils import generate_email_markdown, SLACK_MSG_TEMPLATE
 from langchain_core.runnables import RunnableConfig
-from typing import Annotated
+from typing import Annotated, Any
 import json
 from slack_sdk.web.async_client import AsyncWebClient
 import os
 from dotenv import load_dotenv
 from datetime import datetime
+from langgraph.runtime import get_runtime
 load_dotenv("../.env")
 
 
@@ -57,6 +58,7 @@ async def write_email_response(
     new_recipients: list[str],
     state: Annotated[EmailAgentState, InjectedState],
 ):
+    runtime = get_runtime(EmailConfigSchema)
     recipients = [state["email"]["from_email"]]
     if isinstance(new_recipients, str):
         new_recipients = json.loads(new_recipients)
@@ -68,6 +70,7 @@ async def write_email_response(
             subject=state["email"]["subject"],
             body=content,
             reply_to_message_id=state["email"]["id"],
+            user_email=runtime.context.get("email")
         )
     except Exception as e:
         return f"Error sending email: {e}"
@@ -80,11 +83,13 @@ async def start_new_email_thread(
     subject: str,
     recipients: list[str]
 ):
+    runtime = get_runtime(EmailConfigSchema)
     try:
         await gmail_send_email(
             to=",".join(recipients),
             subject=subject,
             body=content,
+            user_email=runtime.context.get("email")
         )
     except Exception as e:
         return f"Error sending email: {e}"
@@ -98,13 +103,15 @@ async def send_calendar_invite(
     end_time: str,
     timezone: str = "America/New_York",
 ):
+    runtime = get_runtime(EmailConfigSchema)
     try:
         await google_calendar_create_event(
             title=event_title,
             start_time=start_time,
             end_time=end_time,
             attendee_emails=emails,
-            timezone=timezone,
+            timezone=timezone,  
+            user_email=runtime.context.get("email")
         )
     except Exception as e:
         return f"Error creating calendar event: {e}"
@@ -114,8 +121,9 @@ async def send_calendar_invite(
 async def mark_email_as_read(
     state: Annotated[EmailAgentState, InjectedState],
 ):
+    runtime = get_runtime(EmailConfigSchema)
     try:
-        await gmail_mark_as_read(state["email"]["id"])
+        await gmail_mark_as_read(state["email"]["id"], runtime.context.get("email"))
     except Exception as e:
         return f"Error marking email as read: {e}"
     return "Successfully marked an email as read"
@@ -124,8 +132,9 @@ async def mark_email_as_read(
 async def get_events_for_days(
     date_str: str,
 ):
+    runtime = get_runtime(EmailConfigSchema)
     try:
-        events = await google_calendar_list_events_for_date(date_str)
+        events = await google_calendar_list_events_for_date(date_str, runtime.context.get("email"))
         return events
     except Exception as e:
         return f"Error getting events for day: {e}"
@@ -146,14 +155,14 @@ class EmailAgentMiddleware(AgentMiddleware):
 
 class NotifyUserViaSlackMiddleware(AgentMiddleware):
     state_schema = NotifiedState
-    async def after_model(self, state: NotifiedState) -> NotifiedState | None:
+    async def after_model(self, state: NotifiedState, runtime: Any) -> NotifiedState | None:
         messages = state["messages"]
         notified = state["notified"] if "notified" in state else False
         # We only want this to execute on the first AI Message
         if not messages or len(messages) > 2 or notified:
             return
         last_message = messages[-1]
-        userId = os.environ["SLACK_USER_ID"]
+        userId = runtime.context.slack_user_id
         if last_message.type != "ai" or userId is None:
             return
         if "mark_email_as_read" not in [tool_call["name"] for tool_call in last_message.tool_calls]:
