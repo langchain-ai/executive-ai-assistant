@@ -7,10 +7,10 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-deepagents = "0.0.9"
+deepagents = "0.0.10"
 langgraph = "*"
 langgraph-checkpoint = "*"
-langchain = "^1.0.0a9"
+langchain = "^1.0.0a10"
 langchain-auth = "*"
 langchain-openai = "^0.3"
 langchain-anthropic = "^0.3"

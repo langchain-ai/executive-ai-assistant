@@ -1,15 +1,15 @@
 from langgraph.types import interrupt, Command
 from langchain_core.tools import tool, InjectedToolCallId
 from langchain_core.messages import ToolMessage
-from langchain.agents.tool_node import InjectedState
-from langchain.agents.middleware import AgentMiddleware, AgentState, ModelRequest
+from langchain.tools.tool_node import InjectedState
+from langchain.agents.middleware import AgentMiddleware, ModelRequest
 from deepagents import async_create_deep_agent    
 from eaia.deepagent.google_utils import gmail_send_email, gmail_mark_as_read, google_calendar_list_events_for_date, google_calendar_create_event
-from eaia.deepagent.prompts import SYSTEM_PROMPT, EMAIL_INPUT_PROMPT, FIND_MEETING_TIME_SYSTEM_PROMPT
+from eaia.deepagent.prompts import SYSTEM_PROMPT, FIND_MEETING_TIME_SYSTEM_PROMPT
 from eaia.deepagent.types import EmailAgentState, NotifiedState
 from eaia.deepagent.utils import generate_email_markdown, SLACK_MSG_TEMPLATE
 import yaml
-from typing import Annotated, Any
+from typing import Annotated
 from pathlib import Path
 import json
 from datetime import datetime

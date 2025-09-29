@@ -575,18 +575,18 @@ files = [
 
 [[package]]
 name = "deepagents"
-version = "0.0.9"
+version = "0.0.10"
 description = "General purpose 'deep agent' with sub-agent spawning, todo list capabilities, and mock file system. Built on LangGraph."
 optional = false
 python-versions = "<4.0,>=3.11"
 groups = ["main"]
 files = [
-    {file = "deepagents-0.0.9-py3-none-any.whl", hash = "sha256:68784b9f50e49ce4fb2bdaaf2406076493090e3a4482467ef4d2acdd525f84c7"},
-    {file = "deepagents-0.0.9.tar.gz", hash = "sha256:e686e855294b3b39e1fd134468a29f1ac6c2e5068fadd2e4ab18738d47876562"},
+    {file = "deepagents-0.0.10-py3-none-any.whl", hash = "sha256:446fa5d6cb95a3ecc5dec358631c45b584a80127cb51c8aff37c8f675b4dd11a"},
+    {file = "deepagents-0.0.10.tar.gz", hash = "sha256:502e1e581dbec577179c7b78a04ec62a42c9ae8bb8e5e5f6825e06449490c807"},
 ]
 
 [package.dependencies]
-langchain = ">=1.0.0a9"
+langchain = ">=1.0.0a10"
 langchain-anthropic = ">=0.1.23"
 langgraph = ">=1.0.0a3"
 langgraph-prebuilt = ">=0.7.0a2"
@@ -1272,20 +1272,20 @@ test = ["ipykernel", "pre-commit", "pytest (<9)", "pytest-cov", "pytest-timeout"
 
 [[package]]
 name = "langchain"
-version = "1.0.0a9"
+version = "1.0.0a10"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0.0,>=3.10.0"
 groups = ["main"]
 files = [
-    {file = "langchain-1.0.0a9-py3-none-any.whl", hash = "sha256:915db2fb7f7547937ae37a1e9c13177db683be6298395089f8d6cc49c11c69dc"},
-    {file = "langchain-1.0.0a9.tar.gz", hash = "sha256:22f3695337502daed7b35de4b3591c6427f8fc7dc99d343f6fb3620a4e4016a5"},
+    {file = "langchain-1.0.0a10-py3-none-any.whl", hash = "sha256:cb0c485649f41c323d4c573dffc978dd8f21375351723bfd887604f3040dd31c"},
+    {file = "langchain-1.0.0a10.tar.gz", hash = "sha256:6624d993ba89c864c11e2def294689761c7b761b71b21697ce321b9041e9933a"},
 ]
 
 [package.dependencies]
 langchain-core = ">=0.3.75,<2.0.0"
 langchain-text-splitters = ">=0.3.11,<2.0.0"
-langgraph = ">=0.6.7,<2.0.0"
+langgraph = "1.0.0a4"
 pydantic = ">=2.7.4,<3.0.0"
 
 [package.extras]
@@ -1399,14 +1399,14 @@ langchain-core = ">=0.3.75,<2.0.0"
 
 [[package]]
 name = "langgraph"
-version = "1.0.0a3"
+version = "1.0.0a4"
 description = "Building stateful, multi-actor applications with LLMs"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "langgraph-1.0.0a3-py3-none-any.whl", hash = "sha256:07db66d689fcebba7032f2cefc4dfc0d3c977bafeb94895b164beda81a28d870"},
-    {file = "langgraph-1.0.0a3.tar.gz", hash = "sha256:e4d394e1a1e9094e1f2c0f82f70fa243424d57492cfc0372ae018e1343a20ce8"},
+    {file = "langgraph-1.0.0a4-py3-none-any.whl", hash = "sha256:91d26fd0f8045c3008673858c79d8aae7821cdef269443946d192719416c0e49"},
+    {file = "langgraph-1.0.0a4.tar.gz", hash = "sha256:7263648049967d4e2c15c6c94532c4398a05ef785ad09bd50cb2821f137ad0b9"},
 ]
 
 [package.dependencies]
@@ -3777,4 +3777,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "6d53b2a55aadc829a6de49301bcb6fb0703f7438a17a3f54c5a0d2c867c7c7a2"
+content-hash = "eaba9489685bee93a5e18f920fdf744a692871124a5f4e2d8fa1e052494ca6d4"

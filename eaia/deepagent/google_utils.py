@@ -3,14 +3,18 @@
 import os
 import base64
 import logging
-from datetime import datetime, time
-from typing import List, Dict, Optional
+from datetime import datetime, time, timedelta
+from typing import List, Dict, Optional, Iterable
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import email.utils
 import pytz
 from langsmith import traceable
 from dotenv import load_dotenv
+import langsmith as ls
+from eaia.deepagent.types import EmailData
+from eaia.deepagent.utils import parse_time
+
 load_dotenv("../../.env")
 
 logger = logging.getLogger(__name__)
@@ -310,3 +314,139 @@ async def google_calendar_create_event(
 
     except Exception as e:
         return {"success": False, "error": f"Failed to create calendar event: {str(e)}"}
+
+async def fetch_group_emails(
+    to_email,
+    minutes_since: int = 30,
+) -> Iterable[EmailData]:
+    creds = await get_credentials()
+    after = int((datetime.now() - timedelta(minutes=minutes_since)).timestamp())
+    with ls.trace(
+        "Fetching emails",
+        inputs={"to_email": to_email, "after": after},
+    ) as rt:
+        from googleapiclient.discovery import build
+        service = build("gmail", "v1", credentials=creds)
+
+        query = f"(to:{to_email} OR from:{to_email}) after:{after}"
+        messages = []
+        nextPageToken = None
+        # Fetch messages matching the query
+        while True:
+            results = (
+                service.users()
+                .messages()
+                .list(userId="me", q=query, pageToken=nextPageToken)
+                .execute()
+            )
+            if "messages" in results:
+                messages.extend(results["messages"])
+            nextPageToken = results.get("nextPageToken")
+            if not nextPageToken:
+                break
+
+        count = 0
+        for message in messages:
+            try:
+                msg = (
+                    service.users()
+                    .messages()
+                    .get(userId="me", id=message["id"])
+                    .execute()
+                )
+                thread_id = msg["threadId"]
+                payload = msg["payload"]
+                headers = payload.get("headers")
+                # Get the thread details
+                thread = (
+                    service.users().threads().get(userId="me", id=thread_id).execute()
+                )
+                messages_in_thread = thread["messages"]
+                # Check the last message in the thread
+                last_message = messages_in_thread[-1]
+                last_headers = last_message["payload"]["headers"]
+                from_header = next(
+                    header["value"]
+                    for header in last_headers
+                    if header["name"] == "From"
+                )
+                last_from_header = next(
+                    header["value"]
+                    for header in last_message["payload"].get("headers")
+                    if header["name"] == "From"
+                )
+                if to_email in last_from_header:
+                    try:
+                        yield {
+                            "id": message["id"],
+                            "thread_id": message["threadId"],
+                            "user_respond": True,
+                        }
+                    except GeneratorExit:
+                        logger.debug("Generator closed by consumer")
+                        return
+                # Check if the last message was from you and if the current message is the last in the thread
+                if to_email not in from_header and message["id"] == last_message["id"]:
+                    subject = next(
+                        header["value"]
+                        for header in headers
+                        if header["name"] == "Subject"
+                    )
+                    from_email = next(
+                        (
+                            header["value"]
+                            for header in headers
+                            if header["name"] == "From"
+                        ),
+                        "",
+                    ).strip()
+                    _to_email = next(
+                        (
+                            header["value"]
+                            for header in headers
+                            if header["name"] == "To"
+                        ),
+                        "",
+                    ).strip()
+                    if reply_to := next(
+                        (
+                            header["value"]
+                            for header in headers
+                            if header["name"] == "Reply-To"
+                        ),
+                        "",
+                    ).strip():
+                        from_email = reply_to
+                    send_time = next(
+                        header["value"]
+                        for header in headers
+                        if header["name"] == "Date"
+                    )
+                    # Only process emails that are less than an hour old
+                    parsed_time = parse_time(send_time)
+                    body = extract_message_part(payload)
+                    try:
+                        yield {
+                            "from_email": from_email,
+                            "to_email": _to_email,
+                            "subject": subject,
+                            "page_content": body,
+                            "id": message["id"],
+                            "thread_id": message["threadId"],
+                            "send_time": parsed_time.isoformat(),
+                        }
+                        count += 1
+                    except GeneratorExit:
+                        # This is normal when the consumer stops iterating
+                        logger.debug("Generator closed by consumer")
+                        return
+            except GeneratorExit:
+                # Handle GeneratorExit at the outer level
+                logger.debug("Generator closed by consumer")
+                return
+            except Exception as e:
+                rt.error = str(e)
+                print(f"Failed on {message}")
+
+        rt.add_outputs({"count": count})
+        logger.info(f"Found {count} emails.")

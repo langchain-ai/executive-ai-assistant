@@ -23,7 +23,10 @@ async def main():
             "content": "Decide what the best actions are, and handle this new email that just came in.",
             "type": "human"
             }
-        ]
+        ],
+        "files": {
+            "email.txt": "Hey Nick, I need direct feedback from you. I’d like to discuss the latest project related to deepagents and how it will affect the future of our company."
+        }
     }, config=config)
 
     await agent.ainvoke(
@@ -66,4 +69,4 @@ import asyncio
 #     print(response2)
 
 if __name__ == "__main__":
-    asyncio.run(send_slack_msg())
+    asyncio.run(main())
