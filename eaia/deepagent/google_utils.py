@@ -34,10 +34,10 @@ async def get_credentials(user_email: str):
     auth_result = await client.authenticate(
         provider="google-oap-prod",
         scopes=_SCOPES,
-        user_id=user_email
+        user_id=user_email,
+        agent_scoped=False
     )
     from google.oauth2.credentials import Credentials
-    print(auth_result)
     return Credentials(auth_result.token)
 
 
@@ -344,7 +344,6 @@ async def fetch_group_emails(
                 .list(userId="me", q=query, pageToken=nextPageToken)
                 .execute()
             )
-            print("Results!!!!!:", results)
             if "messages" in results:
                 messages.extend(results["messages"])
             nextPageToken = results.get("nextPageToken")
