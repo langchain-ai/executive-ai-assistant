@@ -1,11 +1,12 @@
+from ai_filesystem.exceptions import FileAlreadyExistsError
 from langgraph.types import interrupt, Command
 from langchain_core.tools import tool, InjectedToolCallId
 from langchain_core.messages import ToolMessage
 from langchain.tools.tool_node import InjectedState
-from langchain.agents.middleware import AgentMiddleware, ModelRequest
+from langchain.agents.middleware import AgentMiddleware, ModelRequest, AgentState
 from deepagents import async_create_deep_agent    
 from eaia.deepagent.google_utils import gmail_send_email, gmail_mark_as_read, google_calendar_list_events_for_date, google_calendar_create_event
-from eaia.deepagent.prompts import SYSTEM_PROMPT, FIND_MEETING_TIME_SYSTEM_PROMPT
+from eaia.deepagent.prompts import SYSTEM_PROMPT, FIND_MEETING_TIME_SYSTEM_PROMPT, INSTRUCTIONS_PROMPT
 from eaia.deepagent.types import EmailAgentState, NotifiedState, EmailConfigSchema
 from eaia.deepagent.utils import generate_email_markdown, SLACK_MSG_TEMPLATE
 from langchain_core.runnables import RunnableConfig
@@ -16,6 +17,9 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime
 from langgraph.runtime import get_runtime
+from langgraph.runtime import Runtime
+from ai_filesystem import FilesystemClient
+
 load_dotenv("../.env")
 
 
@@ -125,7 +129,7 @@ async def mark_email_as_read(
     try:
         await gmail_mark_as_read(state["email"]["id"], runtime.context.email)
     except Exception as e:
-        return f"Error marking email as read: {e}"
+        return f"Error marking email as read: {e}"  
     return "Successfully marked an email as read"
 
 @tool(description="Search events for a day. The date str should be in `dd-mm-yyyy` format")
@@ -173,6 +177,53 @@ class NotifyUserViaSlackMiddleware(AgentMiddleware):
             )
             return {"notified": True}
 
+class FilesystemHydratedState(AgentState):
+    filesystem_hydrated: bool = False
+
+class WriteConfigInstructionsToFilesystemMiddleware(AgentMiddleware):
+    state_schema = FilesystemHydratedState
+
+    def before_model(self, agent_state: FilesystemHydratedState, runtime: Runtime) -> AgentState:
+        # If instructions have not been written to long-term memory, write them.
+        hydrated = agent_state["filesystem_hydrated"] if "filesystem_hydrated" in agent_state else False
+        if not hydrated and os.getenv("LONGTERM_FILESYSTEM_NAME") and os.getenv("AGENT_FS_API_KEY"):
+            filesystem_client = FilesystemClient(
+                filesystem=os.getenv("LONGTERM_FILESYSTEM_NAME")
+            )
+            file_data_list = filesystem_client._list_files()
+            if not any(file_data.path == "instructions.txt" for file_data in file_data_list):
+                system_prompt = INSTRUCTIONS_PROMPT.format(
+                    full_name=runtime.context.full_name,
+                    name=runtime.context.name,
+                    background=runtime.context.background,
+                    schedule_preferences=runtime.context.schedule_preferences,
+                    background_preferences=runtime.context.background_preferences,
+                    triage_no=runtime.context.triage_no,
+                    triage_notify=runtime.context.triage_notify,
+                    triage_respond=runtime.context.triage_respond,
+                    writing_preferences=runtime.context.writing_preferences,
+                    timezone=runtime.context.timezone
+                )
+                filesystem_client.create_file(
+                    "instructions.txt",
+                    system_prompt
+                )
+        return {"filesystem_hydrated": True}
+
+    def modify_model_request(self, model_request: ModelRequest, agent_state: FilesystemHydratedState) -> ModelRequest:
+        # Get instructions from long-term memory
+        if os.getenv("LONGTERM_FILESYSTEM_NAME") and os.getenv("AGENT_FS_API_KEY"):
+            filesystem_client = FilesystemClient(
+                filesystem=os.getenv("LONGTERM_FILESYSTEM_NAME")
+            )
+            instructions = filesystem_client.read_file("instructions.txt")
+            model_request.system_prompt = SYSTEM_PROMPT.format(
+                instructions=instructions,
+                existing_system_prompt=model_request.system_prompt
+            )
+        return model_request
+
+
 class AddFileToSystemPromptMiddleware(AgentMiddleware):
     def __init__(self, files_to_inject: list[str]):
         self.files_to_inject = files_to_inject
@@ -193,18 +244,6 @@ class AddFileToSystemPromptMiddleware(AgentMiddleware):
 async def get_deepagent(config: RunnableConfig):
     configurable = config.get("configurable", {})
     graph_config = EmailConfigSchema(**configurable)
-    instructions = SYSTEM_PROMPT.format(
-        full_name=graph_config.full_name,
-        name=graph_config.name,
-        background=graph_config.background,
-        schedule_preferences=graph_config.schedule_preferences,
-        background_preferences=graph_config.background_preferences,
-        triage_no=graph_config.triage_no,
-        triage_notify=graph_config.triage_notify,
-        triage_respond=graph_config.triage_respond,
-        writing_preferences=graph_config.writing_preferences,
-        timezone=graph_config.timezone,
-    )
     find_meeting_times_instructions = FIND_MEETING_TIME_SYSTEM_PROMPT.format(
         full_name=graph_config.full_name,
         name=graph_config.name,
@@ -213,10 +252,9 @@ async def get_deepagent(config: RunnableConfig):
         schedule_preferences=graph_config.schedule_preferences,
         current_date=datetime.now().strftime("%Y-%m-%d")
     )
-
     agent = async_create_deep_agent(
         tools=[message_user, write_email_response, start_new_email_thread, send_calendar_invite, mark_email_as_read],
-        instructions=instructions,
+        instructions="",  # NOTE: This is populated by Middleware now,
         subagents=[
             {
                 "name": "find_meeting_times",
@@ -227,6 +265,7 @@ async def get_deepagent(config: RunnableConfig):
             }
         ],
         middleware=[
+            WriteConfigInstructionsToFilesystemMiddleware(),
             EmailAgentMiddleware(),
             AddFileToSystemPromptMiddleware(files_to_inject=["email.txt"]),
             NotifyUserViaSlackMiddleware()

@@ -1,4 +1,16 @@
-SYSTEM_PROMPT = """You are {full_name}'s executive assistant. You are a top-notch executive assistant who cares about {name} performing as well as possible.
+SYSTEM_PROMPT = """<instructions>
+{instructions}
+</instructions>
+
+Note: You should edit the /memories/instructions.txt file to add additional instructions or feedback from the user. 
+This file is saved long-term across agent executions, so you can use it to remember helpful instructions in the future!
+When editing the file, try to be as surgical as possible, meaning you shouldn't change the format too much, just add bullet points or helpful pieces of information to remember.
+
+{existing_system_prompt}
+"""
+
+
+INSTRUCTIONS_PROMPT = """You are {full_name}'s executive assistant. You are a top-notch executive assistant who cares about {name} performing as well as possible.
 
 {background}. 
 

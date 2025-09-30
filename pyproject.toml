@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-deepagents = "0.0.10"
+deepagents = "0.0.11rc1"
 langgraph = "*"
 langgraph-checkpoint = "*"
 langchain = "^1.0.0a10"
@@ -30,6 +30,7 @@ slack_sdk = "*"
 aiohttp = "*"
 langgraph-api = "^0.4.31"
 langgraph-cli = "^0.4.2"
+ai-filesystem = "^0.1.4"
 
 [tool.setuptools.packages.find]
 where = ["src"]
