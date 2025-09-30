@@ -8,8 +8,7 @@
     "cron": "./eaia/cron_graph.py:graph",
     "multi_reflection_graph": "./eaia/reflection_graphs.py:multi_reflection_graph",
     "deepagent": "./eaia/deepagent/deepagent.py:get_deepagent",
-    "cron_deepagent": "./eaia/deepagent/cron_deepagent.py:graph",
-    "get_runtime_mre": "./eaia/deepagent/get_runtime_mre.py:get_agent"
+    "cron_deepagent": "./eaia/deepagent/cron_deepagent.py:graph"
   },
   "store": {
     "index": {
