@@ -148,18 +148,22 @@ class NotifyUserViaSlackMiddleware(AgentMiddleware):
     async def after_model(self, state: NotifiedState, runtime: Any) -> NotifiedState | None:
         messages = state["messages"]
         notified = state["notified"] if "notified" in state else False
-        # We only want this to execute on the first AI Message
-        if not messages or len(messages) > 2 or notified:
+        if not messages or notified:
             return
         last_message = messages[-1]
         userId = runtime.context.slack_user_id
         if last_message.type != "ai" or userId is None:
             return
-        if "mark_email_as_read" not in [tool_call["name"] for tool_call in last_message.tool_calls]:
+        tools_to_notify_on= [
+            "write_email_response",
+            "start_new_email_thread",
+            "send_calendar_invite",
+            "message_user"
+        ]
+        if any(tool_call["name"] in tools_to_notify_on for tool_call in last_message.tool_calls):
             client = AsyncWebClient(token=os.environ["SLACK_BOT_TOKEN"])
             response = await client.conversations_open(users=[userId])
             channel_id = response["channel"]["id"]
-
             await client.chat_postMessage(
                 channel=channel_id,
                 text=SLACK_MSG_TEMPLATE.format(
