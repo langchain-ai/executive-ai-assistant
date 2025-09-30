@@ -29,14 +29,14 @@ def message_user(
     response = interrupt(
         [
             {
-                "action_request": {"action": "Get Clarification from User", "args": {}},
+                "action_request": {"action": "Get Clarification from User", "args": {"Question": question_for_user}},
                 "config": {
                     "allow_respond": True,
                     "allow_accept": False,
                     "allow_edit": False,
                     "description": description
                 },
-                "description": f"{question_for_user}\n\n {description}"
+                "description": description
             }
         ]
     )[0]
