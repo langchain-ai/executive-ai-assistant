@@ -28,6 +28,8 @@ python-dotenv = "^1.0.1"
 langmem = "0.0.5rc6"
 slack_sdk = "*"
 aiohttp = "*"
+langgraph-api = "^0.4.31"
+langgraph-cli = "^0.4.2"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -41,7 +43,6 @@ pytest-asyncio = "^0.23.6"
 pytest = "^8.2.0"
 pytest-watch = "^4.2.0"
 vcrpy = "^6.0.1"
-langgraph-cli = "^0.1.35"
 
 [build-system]
 requires = ["poetry-core"]

@@ -322,9 +322,8 @@ async def google_calendar_create_event(
 async def fetch_group_emails(
     to_email,
     minutes_since: int = 30,
-    user_email: str = "me",
 ) -> Iterable[EmailData]:
-    creds = await get_credentials(user_email)
+    creds = await get_credentials(to_email)
     after = int((datetime.now() - timedelta(minutes=minutes_since)).timestamp())
     with ls.trace(
         "Fetching emails",

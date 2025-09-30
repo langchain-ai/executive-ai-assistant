@@ -141,16 +141,6 @@ async def get_events_for_days(
 
 class EmailAgentMiddleware(AgentMiddleware):
     state_schema=EmailAgentState
-    # NOTE: Commenting this out in favor of the AddFileToSystemPromptMiddleware
-    # def modify_model_request(self, model_request: ModelRequest, agent_state: EmailAgentState) -> ModelRequest:
-    #     hydrated_prompt = EMAIL_INPUT_PROMPT.format(
-    #         author=agent_state["email"]["from_email"],
-    #         to=agent_state["email"].get("to_email", ""),
-    #         subject=agent_state["email"]["subject"],
-    #         email_thread=agent_state["email"]["page_content"]
-    #     )
-    #     model_request.system_prompt = model_request.system_prompt + "\n\n" + hydrated_prompt
-    #     return model_request
 
 
 class NotifyUserViaSlackMiddleware(AgentMiddleware):
