@@ -157,7 +157,6 @@ class EmailAgentMiddleware(AgentMiddleware):
         last_ai_message = next((msg for msg in reversed(messages) if msg.type == "ai"), None)
         if last_ai_message is None:
             return
-        # If the tool calls are missing ToolMessages after the last AI message, delete the tool call.
         for tool_call in last_ai_message.tool_calls:
             if not any(msg.type == "tool" and msg.tool_call_id == tool_call["id"] for msg in messages):
                 # Append a message before the last message saying that the tool call was not used
