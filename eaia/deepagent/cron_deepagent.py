@@ -9,6 +9,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph_sdk import get_client
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import HumanMessage
+from eaia.deepagent.prompts import EMAIL_INPUT_PROMPT
 from eaia.deepagent.google_utils import fetch_group_emails
 from eaia.deepagent.utils import FILE_TEMPLATE
 from dotenv import load_dotenv
@@ -90,7 +91,12 @@ async def main(state: JobKickoff, config: RunnableConfig):
                 assistant_id,
                 input={
                     "email": email,
-                    "messages": HumanMessage(content="Decide what the best actions are, and handle this new email that just came in."),
+                    "messages": HumanMessage(content=EMAIL_INPUT_PROMPT.format(
+                        author=email["from_email"],
+                        to=email["to_email"],
+                        subject=email["subject"],
+                        email_thread=email["page_content"]
+                    )),
                     "files": {
                         "email.txt": email_str
                     }

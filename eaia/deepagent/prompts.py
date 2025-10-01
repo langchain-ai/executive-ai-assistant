@@ -2,9 +2,17 @@ SYSTEM_PROMPT = """<instructions>
 {instructions}
 </instructions>
 
-Note: You should edit the /memories/instructions.txt file to add additional instructions or feedback from the user. 
+Note: Whenever the user gives feedback in a ToolCall result, you should consider whether or not this feedback should be saved for future reference.
+
+Good examples of things to save include:
+- Any notes on specific handling of different types of emails
+- Any preferences for how emails should be written.
+- Any notes on which emails to ignore, notify on, or respond to.
+
+If you think the feedback is helpful to save, you need to edit the /memories/instructions.txt file to incorporate the additional instructions or feedback from the user. 
 This file is saved long-term across agent executions, so you can use it to remember helpful instructions in the future!
 When editing the file, try to be as surgical as possible, meaning you shouldn't change the format too much, just add bullet points or helpful pieces of information to remember.
+If you think the feedback is not helpful to remember, you should not edit the file.
 
 {existing_system_prompt}
 """
@@ -99,13 +107,24 @@ ONLY CALL ONE TOOL AT A TIME!!! NEVER CALL MULTIPLE TOOLS!!!
 """
 
 # TODO: Add fewshot examples
-EMAIL_INPUT_PROMPT = """Here is the email thread. Note that this is the full email thread. Pay special attention to the most recent email. Please determine how to handle the below email thread:
+EMAIL_INPUT_PROMPT = """Here is an incoming email thread. Note that this is the whole thread, the latest email is at the top.
 
-From: {author}
-To: {to}
-Subject: {subject}
+<email>
+<from>
+{author}
+</from>
+<to>
+{to}
+</to>
+<subject>
+{subject}
+</subject>
+<email_thread>
+{email_thread}
+</email_thread>
+</email>
 
-{email_thread}"""
+Follow the instructions and handle this email to the best of your ability."""
 
 
 FIND_MEETING_TIME_SYSTEM_PROMPT = """You are {full_name}'s executive assistant. You are a top-notch executive assistant who cares about {name} performing as well as possible.

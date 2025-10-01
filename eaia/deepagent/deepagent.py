@@ -146,6 +146,25 @@ async def get_events_for_days(
 class EmailAgentMiddleware(AgentMiddleware):
     state_schema=EmailAgentState
 
+    def before_model(self, agent_state: EmailAgentState, runtime: Any) -> EmailAgentState:
+        # If the last message is a human message, make sure any dangling tool calls are cleaned up.
+        messages = agent_state["messages"]
+        if not messages or len(messages) == 0:
+            return
+        last_message = messages[-1]
+        if last_message.type != "human":
+            return
+        last_ai_message = next((msg for msg in reversed(messages) if msg.type == "ai"), None)
+        if last_ai_message is None:
+            return
+        # If the tool calls are missing ToolMessages after the last AI message, delete the tool call.
+        for tool_call in last_ai_message.tool_calls:
+            if not any(msg.type == "tool" and msg.tool_call_id == tool_call["id"] for msg in messages):
+                # Append a message before the last message saying that the tool call was not used
+                messages.insert(-1, ToolMessage(content=f"Before this tool call: {tool_call['name']} could be approved by the user, a follow-up came in. Please ignore this tool call, it did not execute.", tool_call_id=tool_call["id"]))
+        return agent_state
+
+
 
 class NotifyUserViaSlackMiddleware(AgentMiddleware):
     state_schema = NotifiedState
@@ -267,7 +286,6 @@ async def get_deepagent(config: RunnableConfig):
         middleware=[
             WriteConfigInstructionsToFilesystemMiddleware(),
             EmailAgentMiddleware(),
-            AddFileToSystemPromptMiddleware(files_to_inject=["email.txt"]),
             NotifyUserViaSlackMiddleware()
         ],
         tool_configs={
