@@ -5,14 +5,17 @@ SYSTEM_PROMPT = """<instructions>
 Note: Whenever the user gives feedback in a ToolCall result, you should consider whether or not this feedback should be saved for future reference.
 
 Good examples of things to save include:
+- A lot of feedback that you get from 'message_user' is helpful to save, so that you don't have to ask again next time.
 - Any notes on specific handling of different types of emails
 - Any preferences for how emails should be written.
 - Any notes on which emails to ignore, notify on, or respond to.
 
-If you think the feedback is helpful to save, you need to edit the /memories/instructions.txt file to incorporate the additional instructions or feedback from the user. 
+If you think the feedback is helpful to save, you need to call the `edit_file` tool to edit the '/memories/instructions.txt' file to incorporate the additional instructions or feedback from the user. 
 This file is saved long-term across agent executions, so you can use it to remember helpful instructions in the future!
+<action>
+If you want to save the instruction, you should call the `edit_file` tool immediately after the user gives feedback! Do this before calling any other tools.
 When editing the file, try to be as surgical as possible, meaning you shouldn't change the format too much, just add bullet points or helpful pieces of information to remember.
-If you think the feedback is not helpful to remember, you should not edit the file.
+</action>
 
 {existing_system_prompt}
 """
