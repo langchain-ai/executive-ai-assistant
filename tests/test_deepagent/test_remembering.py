@@ -66,7 +66,6 @@ class TestRemembering:
 
 async def assert_deep_agent_remembering(email: EmailData, human_followup: str):
     config = get_config()
-    thread_id = uuid.uuid4()
     agent = await get_deepagent({"configurable": DEFAULT_CONTEXT})
     agent.checkpointer = MemorySaver()
     response = await agent.ainvoke(
@@ -88,7 +87,7 @@ async def assert_deep_agent_remembering(email: EmailData, human_followup: str):
     assert len(last_message.tool_calls) == 1
     # Can edit the file directly, or read it to get ready to edit it.
     assert last_message.tool_calls[0]["name"] in ["edit_file", "read_file"]
-    assert last_message.tool_calls[0]["args"]["file_path"] in ["memories/instructions.txt", "/memories/instructions.txt"]
+    assert last_message.tool_calls[0]["args"]["file_path"] in ["memories/instructions.txt"]
 
 
 DEFAULT_CONTEXT = {
