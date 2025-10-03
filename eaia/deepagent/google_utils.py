@@ -7,6 +7,7 @@ from datetime import datetime, time, timedelta
 from typing import List, Dict, Optional, Iterable
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.utils import getaddresses
 import email.utils
 import pytz
 from langsmith import traceable
@@ -60,11 +61,13 @@ def extract_message_part(msg):
 
 
 def create_message(
-    sender, to, subject, message_text, thread_id=None, original_message_id=None
+    sender, to, subject, message_text, cc: Optional[List[str]] = None, thread_id=None, original_message_id=None
 ):
     """Create an email message for sending."""
     message = MIMEMultipart()
     message["to"] = ", ".join(to) if isinstance(to, list) else to
+    if cc:
+        message["cc"] = ", ".join(cc) if isinstance(cc, list) else cc
     message["from"] = sender
     message["subject"] = subject
     if original_message_id:
@@ -84,6 +87,31 @@ def format_datetime_with_timezone(dt_str, timezone="US/Pacific"):
     tz = pytz.timezone(timezone)
     dt = dt.astimezone(tz)
     return dt.strftime("%Y-%m-%d %I:%M %p %Z")
+
+
+def get_recipients(headers, email_address, addn_recipients=None):
+    """Extract recipients for reply-all from headers, returning separate to/cc lists."""
+    to_recipients = set(addn_recipients or [])
+    cc_recipients = set()
+    sender = None
+
+    for header in headers:
+        name = header["name"].lower()
+        if name == "to":
+            to_recipients.update(addr for _, addr in getaddresses([header["value"]]))
+        elif name == "cc":
+            cc_recipients.update(addr for _, addr in getaddresses([header["value"]]))
+        elif name == "from":
+            _, sender = getaddresses([header["value"]])[0]
+
+    if sender:
+        to_recipients.add(sender)
+
+    # Remove your own address from both lists
+    to_recipients = {r for r in to_recipients if r.lower() != email_address.lower()}
+    cc_recipients = {r for r in cc_recipients if r.lower() != email_address.lower()}
+
+    return list(to_recipients), list(cc_recipients)
 
 
 @traceable
@@ -113,6 +141,7 @@ async def gmail_send_email(
 
     try:
         to_list = [addr.strip() for addr in to.split(",")]
+        cc_list = None
         thread_id = None
         original_message_id = None
 
@@ -129,9 +158,10 @@ async def gmail_send_email(
             original_message_id = next(
                 (h["value"] for h in headers if h["name"] == "Message-ID"), None
             )
+            to_list, cc_list = get_recipients(headers, email_address=user_email, addn_recipients=to_list)
 
         message = create_message(
-            "me", to_list, subject, body, thread_id, original_message_id
+            "me", to_list, subject, body, cc=cc_list, thread_id=thread_id, original_message_id=original_message_id
         )
         result = service.users().messages().send(userId="me", body=message).execute()
         return {
