@@ -154,13 +154,25 @@ class EmailAgentMiddleware(AgentMiddleware):
         last_message = messages[-1]
         if last_message.type != "human":
             return
-        last_ai_message = next((msg for msg in reversed(messages) if msg.type == "ai"), None)
-        if last_ai_message is None:
-            return
-        for tool_call in last_ai_message.tool_calls:
-            if not any(msg.type == "tool" and msg.tool_call_id == tool_call["id"] for msg in messages):
-                # Append a message before the last message saying that the tool call was not used
-                messages.insert(-1, ToolMessage(content=f"Before this tool call: {tool_call['name']} could be approved by the user, a follow-up came in. Please ignore this tool call, it did not execute.", tool_call_id=tool_call["id"]))
+        # Iterate through all AI messages and fix dangling tool calls
+        index = 0
+        while index < len(messages):
+            msg = messages[index]
+            if msg.type == "ai" and msg.tool_calls:
+                for tool_call in msg.tool_calls:
+                    has_tool_response = any(
+                        m.type == "tool" and m.tool_call_id == tool_call["id"]
+                        for m in messages[index + 1:]
+                    )
+                    if not has_tool_response:
+                        messages.insert(
+                            index + 1,
+                            ToolMessage(
+                                content=f"Before this tool call: {tool_call['name']} could be approved by the user, a follow-up came in. Please ignore this tool call, it did not execute.",
+                                tool_call_id=tool_call["id"]
+                            )
+                        )
+            index += 1
         return agent_state
 
 
