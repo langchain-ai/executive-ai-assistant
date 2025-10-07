@@ -1,16 +1,16 @@
-from ai_filesystem.exceptions import FileAlreadyExistsError
 from langgraph.types import interrupt, Command
 from langchain_core.tools import tool, InjectedToolCallId
 from langchain_core.messages import ToolMessage
 from langchain.tools.tool_node import InjectedState
 from langchain.agents.middleware import AgentMiddleware, ModelRequest, AgentState
+from langgraph.graph.ui import AnyUIMessage, ui_message_reducer, push_ui_message
 from deepagents import async_create_deep_agent    
 from eaia.deepagent.google_utils import gmail_send_email, gmail_mark_as_read, google_calendar_list_events_for_date, google_calendar_create_event
 from eaia.deepagent.prompts import SYSTEM_PROMPT, FIND_MEETING_TIME_SYSTEM_PROMPT, INSTRUCTIONS_PROMPT
 from eaia.deepagent.types import EmailAgentState, NotifiedState, EmailConfigSchema
 from eaia.deepagent.utils import generate_email_markdown, SLACK_MSG_TEMPLATE
 from langchain_core.runnables import RunnableConfig
-from typing import Annotated, Any
+from typing import Annotated, Any, Sequence, TypedDict, Optional
 import json
 from slack_sdk.web.async_client import AsyncWebClient
 import os
@@ -176,6 +176,35 @@ class EmailAgentMiddleware(AgentMiddleware):
         return agent_state
 
 
+class UIState(AgentState):
+    ui: Annotated[Sequence[AnyUIMessage], ui_message_reducer]
+
+class ToolGenUI(TypedDict):
+    component_name: str
+
+# NOTE: Push the UI Message in a separate middleware for now.
+class GenUIMiddleware(AgentMiddleware):
+    state_schema = UIState
+
+    def __init__(self, tool_to_genui_map: dict[str, ToolGenUI]):
+        self.tool_to_genui_map = tool_to_genui_map
+        
+    def after_model(self, state: UIState, runtime: Runtime) -> dict[str, Any] | None:
+        last_message = state["messages"][-1]
+        if last_message.type != "ai":
+            return
+        if last_message.tool_calls:
+            for tool_call in last_message.tool_calls:
+                if tool_call["name"] in self.tool_to_genui_map:
+                    component_name = self.tool_to_genui_map[tool_call["name"]]["component_name"]
+                    push_ui_message(
+                        component_name,
+                        {},
+                        metadata={
+                            "tool_call_id": tool_call["id"]
+                        },
+                        message=last_message
+                    )
 
 class NotifyUserViaSlackMiddleware(AgentMiddleware):
     state_schema = NotifiedState
@@ -297,7 +326,15 @@ async def get_deepagent(config: RunnableConfig):
         middleware=[
             WriteConfigInstructionsToFilesystemMiddleware(),
             EmailAgentMiddleware(),
-            NotifyUserViaSlackMiddleware()
+            NotifyUserViaSlackMiddleware(),
+            GenUIMiddleware(tool_to_genui_map={
+                "write_email_response": {"component_name": "write_email_response"},
+                "start_new_email_thread": {"component_name": "start_new_email_thread"},
+                "send_calendar_invite": {"component_name": "send_calendar_invite"},
+                "get_events_for_days": {"component_name": "get_events_for_days"},
+                "message_user": {"component_name": "message_user"},
+                "mark_email_as_read": {"component_name": "email_marked_as_read"}
+            })
         ],
         tool_configs={
             "write_email_response": {
