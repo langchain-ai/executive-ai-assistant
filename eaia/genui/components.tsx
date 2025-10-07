@@ -122,7 +122,7 @@ const WriteEmailResponseComponent = () => {
           {
             type: "edit",
             args: {
-              action: "edit",
+              action: "write_email_response",
               args: {
                 new_recipients: recipients,
                 content
@@ -135,7 +135,6 @@ const WriteEmailResponseComponent = () => {
 
     const handleSubmitFeedback = () => {
       const feedbackMessage = `User Feedback: ${feedback}`;
-      console.log("Submitting feedback:", feedbackMessage);
       submit(null, { command: { resume: [
         {
           type: "response",
@@ -453,11 +452,14 @@ const SendCalendarInviteComponent = () => {
         {
           type: "edit",
           args: {
-            emails,
-            event_title: eventTitle,
-            start_time: startTime,
-            end_time: endTime,
-            timezone
+            action: "send_calendar_invite",
+            args: {
+              emails,
+              event_title: eventTitle,
+              start_time: startTime,
+              end_time: endTime,
+              timezone
+            }
           }
         }
       ] } })
@@ -731,7 +733,7 @@ const StartNewEmailThreadComponent = () => {
           {
             type: "edit",
             args: {
-              action: "edit",
+              action: "start_new_email_thread",
               args: {
                 recipients,
                 subject,
