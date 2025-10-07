@@ -171,14 +171,14 @@ files = [
 
 [[package]]
 name = "anthropic"
-version = "0.68.0"
+version = "0.69.0"
 description = "The official Python library for the anthropic API"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "anthropic-0.68.0-py3-none-any.whl", hash = "sha256:ac579ea5eca22a7165b1042e6af57c4bf556e51afae3ca80e24768d4756b78c0"},
-    {file = "anthropic-0.68.0.tar.gz", hash = "sha256:507e9b5f627d1b249128ff15b21855e718fa4ed8dabc787d0e68860a4b32a7a8"},
+    {file = "anthropic-0.69.0-py3-none-any.whl", hash = "sha256:1f73193040f33f11e27c2cd6ec25f24fe7c3f193dc1c5cde6b7a08b18a16bcc5"},
+    {file = "anthropic-0.69.0.tar.gz", hash = "sha256:c604d287f4d73640f40bd2c0f3265a2eb6ce034217ead0608f6b07a8bc5ae5f2"},
 ]
 
 [package.dependencies]
@@ -1664,19 +1664,19 @@ xai = ["langchain-xai"]
 
 [[package]]
 name = "langchain-anthropic"
-version = "0.3.20"
+version = "1.0.0a2"
 description = "An integration package connecting Anthropic and LangChain"
 optional = false
-python-versions = ">=3.9"
+python-versions = "<4.0.0,>=3.10.0"
 groups = ["main"]
 files = [
-    {file = "langchain_anthropic-0.3.20-py3-none-any.whl", hash = "sha256:0b79aad346781d63af797af60b5aa9db7f95174a382712ee8fb2ad42573e2560"},
-    {file = "langchain_anthropic-0.3.20.tar.gz", hash = "sha256:8ad996817a051db1dbaa1b76d710ad2588b93b9bf3c4ac7ecf66c1d480f921fc"},
+    {file = "langchain_anthropic-1.0.0a2-py3-none-any.whl", hash = "sha256:b44f221b6688baa170977f77650a34f617cc10289f92d3a2f4a891f1ea55a96c"},
+    {file = "langchain_anthropic-1.0.0a2.tar.gz", hash = "sha256:7291174599ad35a1f8cd39c9f2913273ab198e622d3b8a151d528d63978182ba"},
 ]
 
 [package.dependencies]
-anthropic = ">=0.67.0,<1"
-langchain-core = ">=0.3.76,<1.0.0"
+anthropic = ">=0.69.0,<1.0.0"
+langchain-core = ">=1.0.0a5,<2.0.0"
 pydantic = ">=2.7.4,<3.0.0"
 
 [[package]]
@@ -1701,41 +1701,41 @@ langgraph = ["langgraph (>=0.1.0)"]
 
 [[package]]
 name = "langchain-core"
-version = "0.3.76"
+version = "1.0.0a6"
 description = "Building applications with LLMs through composability"
 optional = false
-python-versions = ">=3.9"
+python-versions = "<4.0.0,>=3.10.0"
 groups = ["main"]
 files = [
-    {file = "langchain_core-0.3.76-py3-none-any.whl", hash = "sha256:46e0eb48c7ac532432d51f8ca1ece1804c82afe9ae3dcf027b867edadf82b3ec"},
-    {file = "langchain_core-0.3.76.tar.gz", hash = "sha256:71136a122dd1abae2c289c5809d035cf12b5f2bb682d8a4c1078cd94feae7419"},
+    {file = "langchain_core-1.0.0a6-py3-none-any.whl", hash = "sha256:46bb8f5dfe3637cf5fa594a8e40ddd2d4fd1cb48559afaeeece0ea83bd715a22"},
+    {file = "langchain_core-1.0.0a6.tar.gz", hash = "sha256:8c6d60cae6d7e6c3e3555ad05a4e65d0ae8167a7ee7b40233663209b019ffeae"},
 ]
 
 [package.dependencies]
-jsonpatch = ">=1.33,<2.0"
-langsmith = ">=0.3.45"
-packaging = ">=23.2"
-pydantic = ">=2.7.4"
-PyYAML = ">=5.3"
+jsonpatch = ">=1.33.0,<2.0.0"
+langsmith = ">=0.3.45,<1.0.0"
+packaging = ">=23.2.0,<26.0.0"
+pydantic = ">=2.7.4,<3.0.0"
+PyYAML = ">=5.3.0,<7.0.0"
 tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<10.0.0"
-typing-extensions = ">=4.7"
+typing-extensions = ">=4.7.0,<5.0.0"
 
 [[package]]
 name = "langchain-openai"
-version = "0.3.33"
+version = "1.0.0a3"
 description = "An integration package connecting OpenAI and LangChain"
 optional = false
-python-versions = ">=3.9"
+python-versions = "<4.0.0,>=3.10.0"
 groups = ["main"]
 files = [
-    {file = "langchain_openai-0.3.33-py3-none-any.whl", hash = "sha256:2d52aab6d2af61da9bb9470616ce782128f4be59df965caee3dece30ae6b2bc4"},
-    {file = "langchain_openai-0.3.33.tar.gz", hash = "sha256:2dec058332ea9e8977cd91df6515b95952e187ac7484f349c3fe91d936a92375"},
+    {file = "langchain_openai-1.0.0a3-py3-none-any.whl", hash = "sha256:849a4409ea1b6b4ef0ff4fe8e15e1bb37695f42e218085d64ad6d259b93c3953"},
+    {file = "langchain_openai-1.0.0a3.tar.gz", hash = "sha256:9aa35608a0125bfadc64ba044995fe3ca5b93b12067ba7063fade579aed9eda7"},
 ]
 
 [package.dependencies]
-langchain-core = ">=0.3.76,<1.0.0"
-openai = ">=1.104.2,<2.0.0"
-tiktoken = ">=0.7,<1"
+langchain-core = ">=1.0.0a5,<2.0.0"
+openai = ">=1.109.1,<2.0.0"
+tiktoken = ">=0.7.0,<1.0.0"
 
 [[package]]
 name = "langchain-text-splitters"
@@ -4534,4 +4534,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "068eb981b8e5dc63d38096f54c36b5b9b93c290bc2e6da2b33e0768bfe020b06"
+content-hash = "839d0c1c36d0a2ea1c2fc244fea0aa1addecea5856dcebb12102d0cfa9fb5b42"

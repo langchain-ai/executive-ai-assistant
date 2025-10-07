@@ -16,5 +16,8 @@
       "dims": 1536
     }
   },
-  "env": ".env"
+  "env": ".env",
+  "ui": {
+    "deepagent": "./eaia/genui/components.tsx"
+  }
 }
