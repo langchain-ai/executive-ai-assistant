@@ -33,7 +33,7 @@ async def get_credentials(user_email: str):
     from langchain_auth import Client
     client = Client(api_key=os.environ["LANGCHAIN_API_KEY"])
     auth_result = await client.authenticate(
-        provider="google-oap-prod",
+        provider="google-langsmith-prod",
         scopes=_SCOPES,
         user_id=user_email,
         agent_scoped=False
