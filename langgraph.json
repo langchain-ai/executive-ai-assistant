@@ -1,7 +1,7 @@
 {
   "python_version": "3.11",
   "dependencies": [
-    "."
+    "./pyproject.toml", "./genui/package.json"
   ],
   "graphs": {
     "main": "./eaia/main/graph.py:graph",
