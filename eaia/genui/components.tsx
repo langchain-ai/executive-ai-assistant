@@ -134,10 +134,12 @@ const WriteEmailResponseComponent = () => {
     };
 
     const handleSubmitFeedback = () => {
+      const feedbackMessage = `User Feedback: ${feedback}`;
+      console.log("Submitting feedback:", feedbackMessage);
       submit(null, { command: { resume: [
         {
           type: "response",
-          args: `User Feedback: ${feedback}`
+          args: feedbackMessage
         }
       ] } })
     };
@@ -462,10 +464,12 @@ const SendCalendarInviteComponent = () => {
     };
 
     const handleSubmitFeedback = () => {
+      const feedbackMessage = `User Feedback: ${feedback}`;
+      console.log("Submitting feedback:", feedbackMessage);
       submit(null, { command: { resume: [
         {
           type: "response",
-          args: `User Feedback: ${feedback}`
+          args: feedbackMessage
         }
       ] } })
     };
