@@ -95,6 +95,56 @@ const CopyIcon = () => (
 // Shared Components
 // ============================================================================
 
+interface EmailData {
+  id: string;
+  thread_id: string;
+  from_email: string;
+  subject: string;
+  page_content: string;
+  send_time: string;
+  to_email: string;
+}
+
+interface EmailThreadViewProps {
+  email?: EmailData;
+}
+
+const EmailThreadView: React.FC<EmailThreadViewProps> = ({ email }) => {
+  if (!email) return null;
+
+  return (
+    <div className="w-[35%] flex-shrink-0 border-l-2 border-gray-200 pl-4">
+      <div className="sticky top-4">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3 pb-2 border-b border-gray-300">Email Thread</h3>
+        <div className="space-y-3 text-xs">
+          <div>
+            <div className="text-gray-500 font-medium mb-0.5">From:</div>
+            <div className="text-gray-900 break-words">{email.from_email}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 font-medium mb-0.5">To:</div>
+            <div className="text-gray-900 break-words">{email.to_email}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 font-medium mb-0.5">Subject:</div>
+            <div className="text-gray-900 break-words font-medium">{email.subject}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 font-medium mb-0.5">Timestamp:</div>
+            <div className="text-gray-900">{email.send_time}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 font-medium mb-0.5">Content:</div>
+            <div className="text-gray-700 whitespace-pre-wrap break-words max-h-96 overflow-y-auto bg-gray-50 p-2 rounded border border-gray-200">
+              {email.page_content}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 interface StatusBannerProps {
   status: "pending" | "completed" | "error" | "interrupted";
   result?: string;
@@ -184,7 +234,7 @@ const openInGmailButton = (emailId: string, compact: boolean = false) => (
 
 const EmailMarkedAsReadComponent = () => {
     const { values, meta } = useStreamContext<
-      { email?: { id?: string } },
+      { email?: EmailData },
       { MetaType: {
         args?: Record<string, any>,
         result?: string,
@@ -205,7 +255,7 @@ const EmailMarkedAsReadComponent = () => {
           <div className="flex items-center gap-2 text-gray-600">
             <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             Marking email as read...
           </div>
@@ -225,9 +275,12 @@ const EmailMarkedAsReadComponent = () => {
 
     return (
       <div className={`rounded-lg border-2 ${getBorderColor()} p-4 bg-white w-full max-w-full`}>
-        <div className="flex flex-col gap-3">
-          {getContent()}
-          {openInGmailButton(values.email?.id || "")}
+        <div className="flex gap-4">
+          <div className="flex-1 flex flex-col gap-3">
+            {getContent()}
+            {openInGmailButton(values.email?.id || "")}
+          </div>
+          <EmailThreadView email={values.email} />
         </div>
       </div>
     );
@@ -235,7 +288,7 @@ const EmailMarkedAsReadComponent = () => {
 
 const WriteEmailResponseComponent = () => {
     const { values, meta, submit } = useStreamContext<
-      { email?: { id?: string } },
+      { email?: EmailData },
       { MetaType: {
         args?: Record<string, any>,
         result?: string,
@@ -308,7 +361,8 @@ const WriteEmailResponseComponent = () => {
           errorMessage="Could not send email"
         />
 
-        <div className="flex flex-col gap-4 w-full">
+        <div className="flex gap-4">
+          <div className="flex-1 flex flex-col gap-4">
           {/* Recipients Section */}
           <div className="relative">
             <div className="flex justify-between items-center mb-2">
@@ -352,11 +406,11 @@ const WriteEmailResponseComponent = () => {
               <textarea
                 value={content}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[400px] font-mono text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[400px] font-mono text-xs"
                 placeholder="Email content..."
               />
             ) : (
-              <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-700 border border-gray-200 min-h-[400px] whitespace-pre-wrap font-mono text-sm">
+              <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-700 border border-gray-200 min-h-[400px] whitespace-pre-wrap font-mono text-xs">
                 {content}
               </div>
             )}
@@ -392,7 +446,7 @@ const WriteEmailResponseComponent = () => {
                         handleSubmitFeedback();
                       }
                     }}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[80px] bg-purple-50/30"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[80px] bg-purple-50/30 text-xs"
                     placeholder="e.g., 'Make the tone more formal' or 'Add a closing paragraph'"
                   />
                 </div>
@@ -406,6 +460,8 @@ const WriteEmailResponseComponent = () => {
               </div>
             </div>
           )}
+          </div>
+          <EmailThreadView email={values.email} />
         </div>
       </div>
     );
@@ -413,7 +469,7 @@ const WriteEmailResponseComponent = () => {
 
 const MessageUserComponent = () => {
     const { values, meta, submit } = useStreamContext<
-      { email?: { id?: string } },
+      { email?: EmailData },
       { MetaType: {
         args?: Record<string, any>,
         result?: string,
@@ -444,9 +500,12 @@ const MessageUserComponent = () => {
     if (status === "error") {
       return (
         <div className="rounded-lg border-2 border-red-500 p-4 bg-white w-full max-w-full">
-          <div className="flex items-center gap-2 text-red-600 p-3 bg-red-50 rounded-md">
-            <ErrorIcon />
-            {result || "An error occurred"}
+          <div className="flex gap-4">
+            <div className="flex-1 flex items-center gap-2 text-red-600 p-3 bg-red-50 rounded-md">
+              <ErrorIcon />
+              {result || "An error occurred"}
+            </div>
+            <EmailThreadView email={values.email} />
           </div>
         </div>
       );
@@ -459,9 +518,12 @@ const MessageUserComponent = () => {
       if (isCancelled) {
         return (
           <div className="rounded-lg border-2 border-yellow-500 p-4 bg-white w-full max-w-full">
-            <div className="flex items-center gap-2 text-yellow-600 p-3 bg-yellow-50 rounded-md">
-              <WarningIcon />
-              Tool Call Cancelled
+            <div className="flex gap-4">
+              <div className="flex-1 flex items-center gap-2 text-yellow-600 p-3 bg-yellow-50 rounded-md">
+                <WarningIcon />
+                Tool Call Cancelled
+              </div>
+              <EmailThreadView email={values.email} />
             </div>
           </div>
         );
@@ -469,14 +531,17 @@ const MessageUserComponent = () => {
 
       return (
         <div className="rounded-lg border-2 border-green-500 p-4 bg-white w-full max-w-full">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-2 text-green-600 font-medium">
-              <CheckIcon />
-              Response received
+          <div className="flex gap-4">
+            <div className="flex-1 flex flex-col gap-3">
+              <div className="flex items-center gap-2 text-green-600 font-medium">
+                <CheckIcon />
+                Response received
+              </div>
+              <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-700 border border-gray-200 whitespace-pre-wrap">
+                {result}
+              </div>
             </div>
-            <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-700 border border-gray-200 whitespace-pre-wrap">
-              {result}
-            </div>
+            <EmailThreadView email={values.email} />
           </div>
         </div>
       );
@@ -491,7 +556,8 @@ const MessageUserComponent = () => {
           <ClockIcon />
           Awaiting user input...
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="flex gap-4">
+          <div className="flex-1 flex flex-col gap-4">
           <div className="flex items-center gap-2 text-blue-600 font-medium">
             <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -514,7 +580,7 @@ const MessageUserComponent = () => {
                   handleSubmitResponse();
                 }
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px] text-xs"
               placeholder="Type your response here..."
             />
           </div>
@@ -529,14 +595,16 @@ const MessageUserComponent = () => {
               Submit Response
             </button>
           </div>
+          </div>
+          <EmailThreadView email={values.email} />
         </div>
       </div>
     );
 }
 
 const SendCalendarInviteComponent = () => {
-    const { meta, submit } = useStreamContext<
-      {},
+    const { values, meta, submit } = useStreamContext<
+      { email?: EmailData },
       { MetaType: {
         args?: Record<string, any>,
         result?: string,
@@ -601,7 +669,8 @@ const SendCalendarInviteComponent = () => {
           errorMessage={result || "Failed to schedule event"}
         />
 
-        <div className="flex flex-col gap-4 w-full">
+        <div className="flex gap-4">
+          <div className="flex-1 flex flex-col gap-4">
           {/* Event Title */}
           <div>
             <label className="text-sm font-medium text-gray-700 mb-2 block">Event Title:</label>
@@ -610,11 +679,11 @@ const SendCalendarInviteComponent = () => {
                 type="text"
                 value={eventTitle}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEventTitle(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
                 placeholder="Event title"
               />
             ) : (
-              <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-700 border border-gray-200 font-medium">
+              <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-700 border border-gray-200 font-medium text-xs">
                 {eventTitle}
               </div>
             )}
@@ -628,11 +697,11 @@ const SendCalendarInviteComponent = () => {
                 type="text"
                 value={emails.join(", ")}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmails(e.target.value.split(",").map((email: string) => email.trim()))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
                 placeholder="email@example.com, another@example.com"
               />
             ) : (
-              <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-700 border border-gray-200">
+              <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-700 border border-gray-200 text-xs">
                 {emails.join(", ")}
               </div>
             )}
@@ -646,10 +715,10 @@ const SendCalendarInviteComponent = () => {
                 type="datetime-local"
                 value={startTime}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStartTime(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
               />
             ) : (
-              <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-700 border border-gray-200">
+              <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-700 border border-gray-200 text-xs">
                 {new Date(startTime).toLocaleString()}
               </div>
             )}
@@ -663,10 +732,10 @@ const SendCalendarInviteComponent = () => {
                 type="datetime-local"
                 value={endTime}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEndTime(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
               />
             ) : (
-              <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-700 border border-gray-200">
+              <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-700 border border-gray-200 text-xs">
                 {new Date(endTime).toLocaleString()}
               </div>
             )}
@@ -680,11 +749,11 @@ const SendCalendarInviteComponent = () => {
                 type="text"
                 value={timezone}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTimezone(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
                 placeholder="America/New_York"
               />
             ) : (
-              <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-700 border border-gray-200">
+              <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-700 border border-gray-200 text-xs">
                 {timezone}
               </div>
             )}
@@ -717,7 +786,7 @@ const SendCalendarInviteComponent = () => {
                         handleSubmitFeedback();
                       }
                     }}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[80px] bg-purple-50/30"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[80px] bg-purple-50/30 text-xs"
                     placeholder="e.g., 'Change the time to 3pm' or 'Add more attendees'"
                   />
                 </div>
@@ -731,6 +800,8 @@ const SendCalendarInviteComponent = () => {
               </div>
             </div>
           )}
+          </div>
+          <EmailThreadView email={values.email} />
         </div>
       </div>
     );
@@ -738,7 +809,7 @@ const SendCalendarInviteComponent = () => {
 
 const StartNewEmailThreadComponent = () => {
     const { values, meta, submit } = useStreamContext<
-      { email?: { id?: string } },
+      { email?: EmailData },
       { MetaType: {
         args?: Record<string, any>,
         result?: string,
@@ -813,7 +884,8 @@ const StartNewEmailThreadComponent = () => {
           errorMessage="Could not send email"
         />
 
-        <div className="flex flex-col gap-4 w-full">
+        <div className="flex gap-4">
+          <div className="flex-1 flex flex-col gap-4">
           {/* Recipients Section */}
           <div className="relative">
             <div className="flex justify-between items-center mb-2">
@@ -884,11 +956,11 @@ const StartNewEmailThreadComponent = () => {
               <textarea
                 value={content}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[400px] font-mono text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[400px] font-mono text-xs"
                 placeholder="Email content..."
               />
             ) : (
-              <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-700 border border-gray-200 min-h-[400px] whitespace-pre-wrap font-mono text-sm">
+              <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-700 border border-gray-200 min-h-[400px] whitespace-pre-wrap font-mono text-xs">
                 {content}
               </div>
             )}
@@ -924,7 +996,7 @@ const StartNewEmailThreadComponent = () => {
                         handleSubmitFeedback();
                       }
                     }}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[80px] bg-purple-50/30"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[80px] bg-purple-50/30 text-xs"
                     placeholder="e.g., 'Make the tone more formal' or 'Add a closing paragraph'"
                   />
                 </div>
@@ -938,6 +1010,8 @@ const StartNewEmailThreadComponent = () => {
               </div>
             </div>
           )}
+          </div>
+          <EmailThreadView email={values.email} />
         </div>
       </div>
     );
