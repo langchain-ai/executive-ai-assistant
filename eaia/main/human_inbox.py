@@ -7,7 +7,8 @@ from langsmith import traceable
 from eaia.schemas import State, email_template
 from langgraph.types import interrupt
 from langgraph.store.base import BaseStore
-from typing import TypedDict, Literal, Union, Optional
+from typing import Literal, Union, Optional
+from typing_extensions import TypedDict
 from langgraph_sdk import get_client
 from eaia.main.config import get_config
 from eaia.prompt_registry import (

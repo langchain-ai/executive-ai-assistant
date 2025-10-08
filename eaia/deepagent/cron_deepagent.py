@@ -1,7 +1,8 @@
 import hashlib
 import operator
 import uuid
-from typing import Annotated, TypedDict
+from typing import Annotated
+from typing_extensions import TypedDict
 
 import httpx
 import langsmith as ls

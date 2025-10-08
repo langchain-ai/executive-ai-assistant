@@ -10,7 +10,8 @@ from eaia.deepagent.prompts import SYSTEM_PROMPT, FIND_MEETING_TIME_SYSTEM_PROMP
 from eaia.deepagent.types import EmailAgentState, NotifiedState, EmailConfigSchema
 from eaia.deepagent.utils import generate_email_markdown, SLACK_MSG_TEMPLATE
 from langchain_core.runnables import RunnableConfig
-from typing import Annotated, Any, Sequence, TypedDict, Optional
+from typing import Annotated, Any, Sequence, Optional
+from typing_extensions import TypedDict
 import json
 from slack_sdk.web.async_client import AsyncWebClient
 import os

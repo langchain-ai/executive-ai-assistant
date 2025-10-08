@@ -1,7 +1,8 @@
 """Overall agent."""
 
 import json
-from typing import TypedDict, Literal
+from typing import Literal
+from typing_extensions import TypedDict
 from langgraph.graph import END, StateGraph
 from langchain_core.messages import HumanMessage
 from eaia.main.triage import (

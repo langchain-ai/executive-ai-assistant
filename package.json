@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
-    "tailwindcss": "^4.0.0",
     "@langchain/langgraph-sdk": "^0.1.0",
-    "react": "^18.3.1"
+    "react": "^18.3.1",
+    "tailwindcss": "^4.0.0"
   }
 }

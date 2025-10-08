@@ -1,6 +1,6 @@
 import { useStreamContext } from "@langchain/langgraph-sdk/react-ui";
 import React from "react";
-import "./styles.css";
+import "../../styles.css";
 
 const openInGmailButton = (emailId: string, compact: boolean = false) => (
   <a
@@ -300,13 +300,20 @@ const WriteEmailResponseComponent = () => {
                   <textarea
                     value={feedback}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFeedback(e.target.value)}
+                    onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                      if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && feedback.trim()) {
+                        e.preventDefault();
+                        handleSubmitFeedback();
+                      }
+                    }}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[80px] bg-purple-50/30"
                     placeholder="e.g., 'Make the tone more formal' or 'Add a closing paragraph'"
                   />
                 </div>
                 <button
                   onClick={handleSubmitFeedback}
-                  className="self-end px-3 py-1.5 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors font-medium"
+                  disabled={!feedback.trim()}
+                  className="self-end px-3 py-1.5 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-purple-600"
                 >
                   Submit Feedback
                 </button>
@@ -408,6 +415,12 @@ const MessageUserComponent = () => {
             <textarea
               value={response}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setResponse(e.target.value)}
+              onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && response.trim()) {
+                  e.preventDefault();
+                  handleSubmitResponse();
+                }
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
               placeholder="Type your response here..."
             />
@@ -417,7 +430,8 @@ const MessageUserComponent = () => {
             {openInGmailButton(values.email?.id || "", true)}
             <button
               onClick={handleSubmitResponse}
-              className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
+              disabled={!response.trim()}
+              className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
             >
               Submit Response
             </button>
@@ -660,13 +674,20 @@ const SendCalendarInviteComponent = () => {
                   <textarea
                     value={feedback}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFeedback(e.target.value)}
+                    onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                      if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && feedback.trim()) {
+                        e.preventDefault();
+                        handleSubmitFeedback();
+                      }
+                    }}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[80px] bg-purple-50/30"
                     placeholder="e.g., 'Change the time to 3pm' or 'Add more attendees'"
                   />
                 </div>
                 <button
                   onClick={handleSubmitFeedback}
-                  className="self-end px-3 py-1.5 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors font-medium"
+                  disabled={!feedback.trim()}
+                  className="self-end px-3 py-1.5 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-purple-600"
                 >
                   Submit Feedback
                 </button>
@@ -940,13 +961,20 @@ const StartNewEmailThreadComponent = () => {
                   <textarea
                     value={feedback}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFeedback(e.target.value)}
+                    onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                      if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && feedback.trim()) {
+                        e.preventDefault();
+                        handleSubmitFeedback();
+                      }
+                    }}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[80px] bg-purple-50/30"
                     placeholder="e.g., 'Make the tone more formal' or 'Add a closing paragraph'"
                   />
                 </div>
                 <button
                   onClick={handleSubmitFeedback}
-                  className="self-end px-3 py-1.5 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors font-medium"
+                  disabled={!feedback.trim()}
+                  className="self-end px-3 py-1.5 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-purple-600"
                 >
                   Submit Feedback
                 </button>
