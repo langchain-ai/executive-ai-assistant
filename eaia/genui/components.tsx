@@ -146,12 +146,20 @@ const WriteEmailResponseComponent = () => {
     const getBorderColor = () => {
       if (status === "error") return "border-red-500";
       if (status === "interrupted") return "border-purple-500";
-      if (status === "completed") return "border-green-500";
+      if (status === "completed") {
+        const result = meta?.result;
+        const isCancelled = result && typeof result === 'string' && result.includes("Please ignore this tool call, it did not execute.");
+        const hasFeedback = result && typeof result === 'string' && result.includes("User Feedback:");
+        if (isCancelled) return "border-yellow-500";
+        if (hasFeedback) return "border-purple-500";
+        return "border-green-500";
+      }
       return "border-blue-500";
     };
 
     const getStatusBanner = () => {
       const result = meta?.result;
+      const isCancelled = result && typeof result === 'string' && result.includes("Please ignore this tool call, it did not execute.");
       const hasFeedback = result && typeof result === 'string' && result.includes("User Feedback:");
 
       if (status === "pending") {
@@ -167,6 +175,16 @@ const WriteEmailResponseComponent = () => {
       }
 
       if (status === "completed") {
+        if (isCancelled) {
+          return (
+            <div className="flex items-center gap-2 text-yellow-600 mb-4 p-3 bg-yellow-50 rounded-md">
+              <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              Tool Call Cancelled
+            </div>
+          );
+        }
         if (hasFeedback) {
           return (
             <div className="flex flex-col gap-2 text-purple-600 mb-4 p-3 bg-purple-50 rounded-md">
@@ -370,6 +388,21 @@ const MessageUserComponent = () => {
 
     // Completed state
     if (status === "completed") {
+      const isCancelled = result && typeof result === 'string' && result.includes("Please ignore this tool call, it did not execute.");
+
+      if (isCancelled) {
+        return (
+          <div className="rounded-lg border-2 border-yellow-500 p-4 bg-white w-full max-w-full">
+            <div className="flex items-center gap-2 text-yellow-600 p-3 bg-yellow-50 rounded-md">
+              <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              Tool Call Cancelled
+            </div>
+          </div>
+        );
+      }
+
       return (
         <div className="rounded-lg border-2 border-green-500 p-4 bg-white w-full max-w-full">
           <div className="flex flex-col gap-3">
@@ -493,11 +526,18 @@ const SendCalendarInviteComponent = () => {
     const getBorderColor = () => {
       if (status === "error") return "border-red-500";
       if (status === "interrupted") return "border-purple-500";
-      if (status === "completed") return "border-green-500";
+      if (status === "completed") {
+        const isCancelled = result && typeof result === 'string' && result.includes("Please ignore this tool call, it did not execute.");
+        const hasFeedback = result && typeof result === 'string' && result.includes("User Feedback:");
+        if (isCancelled) return "border-yellow-500";
+        if (hasFeedback) return "border-purple-500";
+        return "border-green-500";
+      }
       return "border-blue-500";
     };
 
     const getStatusBanner = () => {
+      const isCancelled = result && typeof result === 'string' && result.includes("Please ignore this tool call, it did not execute.");
       const hasFeedback = result && typeof result === 'string' && result.includes("User Feedback:");
 
       if (status === "pending") {
@@ -513,6 +553,16 @@ const SendCalendarInviteComponent = () => {
       }
 
       if (status === "completed") {
+        if (isCancelled) {
+          return (
+            <div className="flex items-center gap-2 text-yellow-600 mb-4 p-3 bg-yellow-50 rounded-md">
+              <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              Tool Call Cancelled
+            </div>
+          );
+        }
         if (hasFeedback) {
           return (
             <div className="flex flex-col gap-2 text-purple-600 mb-4 p-3 bg-purple-50 rounded-md">
@@ -778,12 +828,20 @@ const StartNewEmailThreadComponent = () => {
     const getBorderColor = () => {
       if (status === "error") return "border-red-500";
       if (status === "interrupted") return "border-purple-500";
-      if (status === "completed") return "border-green-500";
+      if (status === "completed") {
+        const result = meta?.result;
+        const isCancelled = result && typeof result === 'string' && result.includes("Please ignore this tool call, it did not execute.");
+        const hasFeedback = result && typeof result === 'string' && result.includes("User Feedback:");
+        if (isCancelled) return "border-yellow-500";
+        if (hasFeedback) return "border-purple-500";
+        return "border-green-500";
+      }
       return "border-blue-500";
     };
 
     const getStatusBanner = () => {
       const result = meta?.result;
+      const isCancelled = result && typeof result === 'string' && result.includes("Please ignore this tool call, it did not execute.");
       const hasFeedback = result && typeof result === 'string' && result.includes("User Feedback:");
 
       if (status === "pending") {
@@ -799,6 +857,16 @@ const StartNewEmailThreadComponent = () => {
       }
 
       if (status === "completed") {
+        if (isCancelled) {
+          return (
+            <div className="flex items-center gap-2 text-yellow-600 mb-4 p-3 bg-yellow-50 rounded-md">
+              <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              Tool Call Cancelled
+            </div>
+          );
+        }
         if (hasFeedback) {
           return (
             <div className="flex flex-col gap-2 text-purple-600 mb-4 p-3 bg-purple-50 rounded-md">
