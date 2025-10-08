@@ -2,6 +2,166 @@ import { useStreamContext } from "@langchain/langgraph-sdk/react-ui";
 import React from "react";
 import "../../styles.css";
 
+// ============================================================================
+// Utility Functions
+// ============================================================================
+
+const checkIsCancelled = (result: string | undefined): boolean => {
+  return !!(result && typeof result === 'string' && result.includes("Please ignore this tool call, it did not execute."));
+};
+
+const checkHasFeedback = (result: string | undefined): boolean => {
+  return !!(result && typeof result === 'string' && result.includes("User Feedback:"));
+};
+
+const copyToClipboard = (text: string) => {
+  navigator.clipboard.writeText(text);
+};
+
+const parseRecipientsArray = (recipients: any): string[] => {
+  if (!recipients) return [];
+  if (Array.isArray(recipients)) return recipients;
+  if (typeof recipients === 'string') {
+    try {
+      return JSON.parse(recipients);
+    } catch {
+      return [recipients];
+    }
+  }
+  return [];
+};
+
+const getToolCallBorderColor = (status: string, result?: string): string => {
+  if (status === "error") return "border-red-500";
+  if (status === "interrupted") return "border-purple-500";
+  if (status === "completed") {
+    const isCancelled = checkIsCancelled(result);
+    const hasFeedback = checkHasFeedback(result);
+    if (isCancelled) return "border-yellow-500";
+    if (hasFeedback) return "border-purple-500";
+    return "border-green-500";
+  }
+  return "border-blue-500";
+};
+
+// ============================================================================
+// Icon Components
+// ============================================================================
+
+const SpinnerIcon = () => (
+  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+  </svg>
+);
+
+const WarningIcon = () => (
+  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+  </svg>
+);
+
+const ErrorIcon = () => (
+  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+  </svg>
+);
+
+const ClockIcon = () => (
+  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const FeedbackIcon = () => (
+  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+  </svg>
+);
+
+const CopyIcon = () => (
+  <svg className="h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+  </svg>
+);
+
+// ============================================================================
+// Shared Components
+// ============================================================================
+
+interface StatusBannerProps {
+  status: "pending" | "completed" | "error" | "interrupted";
+  result?: string;
+  pendingMessage: string;
+  successMessage: string;
+  errorMessage: string;
+}
+
+const StatusBanner: React.FC<StatusBannerProps> = ({
+  status,
+  result,
+  pendingMessage,
+  successMessage,
+  errorMessage
+}) => {
+  const isCancelled = checkIsCancelled(result);
+  const hasFeedback = checkHasFeedback(result);
+
+  if (status === "pending") {
+    return (
+      <div className="flex items-center gap-2 text-blue-600 mb-4 p-3 bg-blue-50 rounded-md">
+        <SpinnerIcon />
+        {pendingMessage}
+      </div>
+    );
+  }
+
+  if (status === "completed") {
+    if (isCancelled) {
+      return (
+        <div className="flex items-center gap-2 text-yellow-600 mb-4 p-3 bg-yellow-50 rounded-md">
+          <WarningIcon />
+          Tool Call Cancelled
+        </div>
+      );
+    }
+    if (hasFeedback) {
+      return (
+        <div className="flex flex-col gap-2 text-purple-600 mb-4 p-3 bg-purple-50 rounded-md">
+          <div className="flex items-center gap-2 font-medium">
+            <FeedbackIcon />
+            Feedback provided:
+          </div>
+          <div className="text-sm pl-7">{result}</div>
+        </div>
+      );
+    }
+    return (
+      <div className="flex items-center gap-2 text-green-600 mb-4 p-3 bg-green-50 rounded-md">
+        <CheckIcon />
+        {successMessage}
+      </div>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <div className="flex items-center gap-2 text-red-600 mb-4 p-3 bg-red-50 rounded-md">
+        <ErrorIcon />
+        {errorMessage}
+      </div>
+    );
+  }
+
+  return null;
+};
+
 const openInGmailButton = (emailId: string, compact: boolean = false) => (
   <a
     href={`https://mail.google.com/mail/u/0/#inbox/${emailId}`}
@@ -18,9 +178,13 @@ const openInGmailButton = (emailId: string, compact: boolean = false) => (
   </a>
 );
 
+// ============================================================================
+// Components
+// ============================================================================
+
 const EmailMarkedAsReadComponent = () => {
     const { values, meta } = useStreamContext<
-      {},
+      { email?: { id?: string } },
       { MetaType: {
         args?: Record<string, any>,
         result?: string,
@@ -63,7 +227,7 @@ const EmailMarkedAsReadComponent = () => {
       <div className={`rounded-lg border-2 ${getBorderColor()} p-4 bg-white w-full max-w-full`}>
         <div className="flex flex-col gap-3">
           {getContent()}
-          {openInGmailButton(values.email?.id || "", "Open in Gmail")}
+          {openInGmailButton(values.email?.id || "")}
         </div>
       </div>
     );
@@ -80,34 +244,17 @@ const WriteEmailResponseComponent = () => {
     >();
     const args = meta?.args || {};
     const status = meta?.status || "pending";
+    const result = meta?.result;
 
-    // Handle recipients - could be array or string
-    const getRecipientsArray = (recipients: any): string[] => {
-      if (!recipients) return [];
-      if (Array.isArray(recipients)) return recipients;
-      if (typeof recipients === 'string') {
-        try {
-          return JSON.parse(recipients);
-        } catch {
-          return [recipients];
-        }
-      }
-      return [];
-    };
-
-    const [recipients, setRecipients] = React.useState<string[]>(getRecipientsArray(args.new_recipients));
+    const [recipients, setRecipients] = React.useState<string[]>(parseRecipientsArray(args.new_recipients));
     const [content, setContent] = React.useState<string>(args.content || "");
     const [feedback, setFeedback] = React.useState<string>("");
 
     // Update internal state when args change
     React.useEffect(() => {
-      if (args.new_recipients) setRecipients(getRecipientsArray(args.new_recipients));
+      if (args.new_recipients) setRecipients(parseRecipientsArray(args.new_recipients));
       if (args.content) setContent(args.content);
     }, [args.new_recipients, args.content]);
-
-    const copyToClipboard = (text: string) => {
-      navigator.clipboard.writeText(text);
-    };
 
     const handleSendEmail = () => {
       if (recipients == args.new_recipients && content == args.content) {
@@ -143,98 +290,23 @@ const WriteEmailResponseComponent = () => {
       ] } })
     };
 
-    const getBorderColor = () => {
-      if (status === "error") return "border-red-500";
-      if (status === "interrupted") return "border-purple-500";
-      if (status === "completed") {
-        const result = meta?.result;
-        const isCancelled = result && typeof result === 'string' && result.includes("Please ignore this tool call, it did not execute.");
-        const hasFeedback = result && typeof result === 'string' && result.includes("User Feedback:");
-        if (isCancelled) return "border-yellow-500";
-        if (hasFeedback) return "border-purple-500";
-        return "border-green-500";
-      }
-      return "border-blue-500";
-    };
-
-    const getStatusBanner = () => {
-      const result = meta?.result;
-      const isCancelled = result && typeof result === 'string' && result.includes("Please ignore this tool call, it did not execute.");
-      const hasFeedback = result && typeof result === 'string' && result.includes("User Feedback:");
-
-      if (status === "pending") {
-        return (
-          <div className="flex items-center gap-2 text-blue-600 mb-4 p-3 bg-blue-50 rounded-md">
-            <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Sending Email Response...
-          </div>
-        );
-      }
-
-      if (status === "completed") {
-        if (isCancelled) {
-          return (
-            <div className="flex items-center gap-2 text-yellow-600 mb-4 p-3 bg-yellow-50 rounded-md">
-              <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              Tool Call Cancelled
-            </div>
-          );
-        }
-        if (hasFeedback) {
-          return (
-            <div className="flex flex-col gap-2 text-purple-600 mb-4 p-3 bg-purple-50 rounded-md">
-              <div className="flex items-center gap-2 font-medium">
-                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                </svg>
-                Feedback provided:
-              </div>
-              <div className="text-sm pl-7">{result}</div>
-            </div>
-          );
-        }
-        return (
-          <div className="flex items-center gap-2 text-green-600 mb-4 p-3 bg-green-50 rounded-md">
-            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            Email Successfully Sent
-          </div>
-        );
-      }
-
-      if (status === "error") {
-        return (
-          <div className="flex items-center gap-2 text-red-600 mb-4 p-3 bg-red-50 rounded-md">
-            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Could not send email
-          </div>
-        );
-      }
-
-      return null;
-    };
-
     const isEditable = status === "interrupted";
 
     return (
-      <div className={`rounded-lg border-2 ${getBorderColor()} p-4 bg-white w-full max-w-full`}>
+      <div className={`rounded-lg border-2 ${getToolCallBorderColor(status, result)} p-4 bg-white w-full max-w-full`}>
         {status === "interrupted" && (
           <div className="flex items-center gap-2 text-purple-600 mb-4 p-3 bg-purple-50 rounded-md font-medium">
-            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <ClockIcon />
             Awaiting user input...
           </div>
         )}
-        {getStatusBanner()}
+        <StatusBanner
+          status={status}
+          result={result}
+          pendingMessage="Sending Email Response..."
+          successMessage="Email Successfully Sent"
+          errorMessage="Could not send email"
+        />
 
         <div className="flex flex-col gap-4 w-full">
           {/* Recipients Section */}
@@ -246,9 +318,7 @@ const WriteEmailResponseComponent = () => {
                 className="opacity-0 hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded"
                 title="Copy recipients"
               >
-                <svg className="h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
+                <CopyIcon />
               </button>
             </div>
             {isEditable ? (
@@ -275,9 +345,7 @@ const WriteEmailResponseComponent = () => {
                 className="opacity-0 hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded"
                 title="Copy content"
               >
-                <svg className="h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
+                <CopyIcon />
               </button>
             </div>
             {isEditable ? (
@@ -377,9 +445,7 @@ const MessageUserComponent = () => {
       return (
         <div className="rounded-lg border-2 border-red-500 p-4 bg-white w-full max-w-full">
           <div className="flex items-center gap-2 text-red-600 p-3 bg-red-50 rounded-md">
-            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <ErrorIcon />
             {result || "An error occurred"}
           </div>
         </div>
@@ -388,15 +454,13 @@ const MessageUserComponent = () => {
 
     // Completed state
     if (status === "completed") {
-      const isCancelled = result && typeof result === 'string' && result.includes("Please ignore this tool call, it did not execute.");
+      const isCancelled = checkIsCancelled(result);
 
       if (isCancelled) {
         return (
           <div className="rounded-lg border-2 border-yellow-500 p-4 bg-white w-full max-w-full">
             <div className="flex items-center gap-2 text-yellow-600 p-3 bg-yellow-50 rounded-md">
-              <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
+              <WarningIcon />
               Tool Call Cancelled
             </div>
           </div>
@@ -407,9 +471,7 @@ const MessageUserComponent = () => {
         <div className="rounded-lg border-2 border-green-500 p-4 bg-white w-full max-w-full">
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2 text-green-600 font-medium">
-              <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+              <CheckIcon />
               Response received
             </div>
             <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-700 border border-gray-200 whitespace-pre-wrap">
@@ -426,9 +488,7 @@ const MessageUserComponent = () => {
     return (
       <div className="rounded-lg border-2 border-purple-500 p-4 bg-white w-full max-w-full">
         <div className="flex items-center gap-2 text-purple-600 mb-4 p-3 bg-purple-50 rounded-md font-medium">
-          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <ClockIcon />
           Awaiting user input...
         </div>
         <div className="flex flex-col gap-4">
@@ -523,96 +583,23 @@ const SendCalendarInviteComponent = () => {
       ] } })
     };
 
-    const getBorderColor = () => {
-      if (status === "error") return "border-red-500";
-      if (status === "interrupted") return "border-purple-500";
-      if (status === "completed") {
-        const isCancelled = result && typeof result === 'string' && result.includes("Please ignore this tool call, it did not execute.");
-        const hasFeedback = result && typeof result === 'string' && result.includes("User Feedback:");
-        if (isCancelled) return "border-yellow-500";
-        if (hasFeedback) return "border-purple-500";
-        return "border-green-500";
-      }
-      return "border-blue-500";
-    };
-
-    const getStatusBanner = () => {
-      const isCancelled = result && typeof result === 'string' && result.includes("Please ignore this tool call, it did not execute.");
-      const hasFeedback = result && typeof result === 'string' && result.includes("User Feedback:");
-
-      if (status === "pending") {
-        return (
-          <div className="flex items-center gap-2 text-blue-600 mb-4 p-3 bg-blue-50 rounded-md">
-            <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Scheduling event...
-          </div>
-        );
-      }
-
-      if (status === "completed") {
-        if (isCancelled) {
-          return (
-            <div className="flex items-center gap-2 text-yellow-600 mb-4 p-3 bg-yellow-50 rounded-md">
-              <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              Tool Call Cancelled
-            </div>
-          );
-        }
-        if (hasFeedback) {
-          return (
-            <div className="flex flex-col gap-2 text-purple-600 mb-4 p-3 bg-purple-50 rounded-md">
-              <div className="flex items-center gap-2 font-medium">
-                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                </svg>
-                Feedback provided:
-              </div>
-              <div className="text-sm pl-7">{result}</div>
-            </div>
-          );
-        }
-        return (
-          <div className="flex items-center gap-2 text-green-600 mb-4 p-3 bg-green-50 rounded-md">
-            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            Successfully scheduled
-          </div>
-        );
-      }
-
-      if (status === "error") {
-        return (
-          <div className="flex items-center gap-2 text-red-600 mb-4 p-3 bg-red-50 rounded-md">
-            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            {result || "Failed to schedule event"}
-          </div>
-        );
-      }
-
-      return null;
-    };
-
     const isEditable = status === "interrupted";
 
     return (
-      <div className={`rounded-lg border-2 ${getBorderColor()} p-4 bg-white w-full max-w-full`}>
+      <div className={`rounded-lg border-2 ${getToolCallBorderColor(status, result)} p-4 bg-white w-full max-w-full`}>
         {status === "interrupted" && (
           <div className="flex items-center gap-2 text-purple-600 mb-4 p-3 bg-purple-50 rounded-md font-medium">
-            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <ClockIcon />
             Awaiting user input...
           </div>
         )}
-        {getStatusBanner()}
+        <StatusBanner
+          status={status}
+          result={result}
+          pendingMessage="Scheduling event..."
+          successMessage="Successfully scheduled"
+          errorMessage={result || "Failed to schedule event"}
+        />
 
         <div className="flex flex-col gap-4 w-full">
           {/* Event Title */}
@@ -760,36 +747,19 @@ const StartNewEmailThreadComponent = () => {
     >();
     const args = meta?.args || {};
     const status = meta?.status || "pending";
+    const result = meta?.result;
 
-    // Handle recipients - could be array or string
-    const getRecipientsArray = (recipients: any): string[] => {
-      if (!recipients) return [];
-      if (Array.isArray(recipients)) return recipients;
-      if (typeof recipients === 'string') {
-        try {
-          return JSON.parse(recipients);
-        } catch {
-          return [recipients];
-        }
-      }
-      return [];
-    };
-
-    const [recipients, setRecipients] = React.useState<string[]>(getRecipientsArray(args.recipients));
+    const [recipients, setRecipients] = React.useState<string[]>(parseRecipientsArray(args.recipients));
     const [subject, setSubject] = React.useState<string>(args.subject || "");
     const [content, setContent] = React.useState<string>(args.content || "");
     const [feedback, setFeedback] = React.useState<string>("");
 
     // Update internal state when args change
     React.useEffect(() => {
-      if (args.recipients) setRecipients(getRecipientsArray(args.recipients));
+      if (args.recipients) setRecipients(parseRecipientsArray(args.recipients));
       if (args.subject) setSubject(args.subject);
       if (args.content) setContent(args.content);
     }, [args.recipients, args.subject, args.content]);
-
-    const copyToClipboard = (text: string) => {
-      navigator.clipboard.writeText(text);
-    };
 
     const handleSendEmail = () => {
       if (recipients == args.recipients && subject == args.subject && content == args.content) {
@@ -825,98 +795,23 @@ const StartNewEmailThreadComponent = () => {
       ] } })
     };
 
-    const getBorderColor = () => {
-      if (status === "error") return "border-red-500";
-      if (status === "interrupted") return "border-purple-500";
-      if (status === "completed") {
-        const result = meta?.result;
-        const isCancelled = result && typeof result === 'string' && result.includes("Please ignore this tool call, it did not execute.");
-        const hasFeedback = result && typeof result === 'string' && result.includes("User Feedback:");
-        if (isCancelled) return "border-yellow-500";
-        if (hasFeedback) return "border-purple-500";
-        return "border-green-500";
-      }
-      return "border-blue-500";
-    };
-
-    const getStatusBanner = () => {
-      const result = meta?.result;
-      const isCancelled = result && typeof result === 'string' && result.includes("Please ignore this tool call, it did not execute.");
-      const hasFeedback = result && typeof result === 'string' && result.includes("User Feedback:");
-
-      if (status === "pending") {
-        return (
-          <div className="flex items-center gap-2 text-blue-600 mb-4 p-3 bg-blue-50 rounded-md">
-            <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Sending Email...
-          </div>
-        );
-      }
-
-      if (status === "completed") {
-        if (isCancelled) {
-          return (
-            <div className="flex items-center gap-2 text-yellow-600 mb-4 p-3 bg-yellow-50 rounded-md">
-              <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              Tool Call Cancelled
-            </div>
-          );
-        }
-        if (hasFeedback) {
-          return (
-            <div className="flex flex-col gap-2 text-purple-600 mb-4 p-3 bg-purple-50 rounded-md">
-              <div className="flex items-center gap-2 font-medium">
-                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                </svg>
-                Feedback provided:
-              </div>
-              <div className="text-sm pl-7">{result}</div>
-            </div>
-          );
-        }
-        return (
-          <div className="flex items-center gap-2 text-green-600 mb-4 p-3 bg-green-50 rounded-md">
-            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            Email Successfully Sent
-          </div>
-        );
-      }
-
-      if (status === "error") {
-        return (
-          <div className="flex items-center gap-2 text-red-600 mb-4 p-3 bg-red-50 rounded-md">
-            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Could not send email
-          </div>
-        );
-      }
-
-      return null;
-    };
-
     const isEditable = status === "interrupted";
 
     return (
-      <div className={`rounded-lg border-2 ${getBorderColor()} p-4 bg-white w-full max-w-full`}>
+      <div className={`rounded-lg border-2 ${getToolCallBorderColor(status, result)} p-4 bg-white w-full max-w-full`}>
         {status === "interrupted" && (
           <div className="flex items-center gap-2 text-purple-600 mb-4 p-3 bg-purple-50 rounded-md font-medium">
-            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <ClockIcon />
             Awaiting user input...
           </div>
         )}
-        {getStatusBanner()}
+        <StatusBanner
+          status={status}
+          result={result}
+          pendingMessage="Sending Email..."
+          successMessage="Email Successfully Sent"
+          errorMessage="Could not send email"
+        />
 
         <div className="flex flex-col gap-4 w-full">
           {/* Recipients Section */}
@@ -928,9 +823,7 @@ const StartNewEmailThreadComponent = () => {
                 className="opacity-0 hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded"
                 title="Copy recipients"
               >
-                <svg className="h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
+                <CopyIcon />
               </button>
             </div>
             {isEditable ? (
@@ -957,9 +850,7 @@ const StartNewEmailThreadComponent = () => {
                 className="opacity-0 hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded"
                 title="Copy subject"
               >
-                <svg className="h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
+                <CopyIcon />
               </button>
             </div>
             {isEditable ? (
@@ -986,9 +877,7 @@ const StartNewEmailThreadComponent = () => {
                 className="opacity-0 hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded"
                 title="Copy content"
               >
-                <svg className="h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
+                <CopyIcon />
               </button>
             </div>
             {isEditable ? (
