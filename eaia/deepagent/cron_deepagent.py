@@ -100,7 +100,8 @@ async def main(state: JobKickoff, config: RunnableConfig):
                     )),
                     "files": {
                         "email.txt": email_str
-                    }
+                    },
+                    "notified": False
                 },
                 multitask_strategy="rollback",
                 config={**assistant_config, "recursion_limit": 1000},
