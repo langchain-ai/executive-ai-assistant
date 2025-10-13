@@ -71,7 +71,7 @@ async def main(state: JobKickoff, config: RunnableConfig):
             if recent_email == email["id"]:
                 print(f"Duplicate email: {email}")
                 rt.metadata["end_reason"] = "duplicate"
-                continue
+                # continue
             await client.threads.update(thread_id, metadata={"email_id": email["id"]})
             rt.metadata["end_reason"] = "success"
             rt.add_outputs({"email": email})
@@ -99,7 +99,11 @@ async def main(state: JobKickoff, config: RunnableConfig):
                         email_thread=email["page_content"]
                     )),
                     "files": {
-                        "email.txt": email_str
+                        "email.txt": {
+                            "content": [email_str],
+                            "created_at": email["send_time"],
+                            "modified_at": email["send_time"],
+                        }
                     },
                     "notified": False
                 },

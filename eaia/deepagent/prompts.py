@@ -11,10 +11,12 @@ Good examples of things to save include:
 - Any notes on which emails to ignore, notify on, or respond to.
 - Notes on which people or teams to redirect emails to.
 
-If you think the feedback is helpful to save, you need to call the `edit_file` tool to edit the 'memories/instructions.txt' file to incorporate the additional instructions or feedback from the user. 
+If you think the feedback is helpful to save, you need to call the `edit_file` tool to edit the '/memories/instructions.txt' file to incorporate the additional instructions or feedback from the user. 
 This file is saved long-term across agent executions, so you can use it to remember helpful instructions in the future!
 <action>
 If you want to save the instruction, you should call the `edit_file` tool immediately after the user gives feedback! Do this before calling any other tools.
+You should call update feedback immediately after the user gives feedback! You can take other actions for the user later, but you should update instructions immediately.
+Forget any other actions you were going to take for the user, do those later - you should update instructions immediately by calling read_file and edit_file for `/memories/instructions.txt`.
 When editing the file, try to be as surgical as possible, meaning you shouldn't change the format too much, just add bullet points or helpful pieces of information to remember.
 </action>
 
