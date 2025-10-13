@@ -1,6 +1,6 @@
 from langgraph.types import interrupt, Command
 from langchain_core.tools import tool, InjectedToolCallId
-from langchain_core.messages import ToolMessage, AIMessage
+from langchain_core.messages import ToolMessage, AIMessage, RemoveMessage
 from langchain.tools.tool_node import InjectedState
 from langchain.agents.middleware import AgentMiddleware, ModelRequest, AgentState
 from langchain.agents.middleware.filesystem import FileData
@@ -282,7 +282,7 @@ class WriteConfigInstructionsToFilesystemMiddleware(AgentMiddleware):
                     writing_preferences=runtime.context.writing_preferences,
                     timezone=runtime.context.timezone
                 )
-                await store.aput(namespace, "/instructions.txt", FileData(content=system_prompt, created_at=datetime.now().isoformat(), modified_at=datetime.now().isoformat()))
+                await store.aput(namespace, "/instructions.txt", FileData(content=[system_prompt], created_at=datetime.now().isoformat(), modified_at=datetime.now().isoformat()))
         return {"filesystem_hydrated": True}
 
     async def awrap_model_call(self, model_request: ModelRequest, handler: Callable[[ModelRequest], AIMessage]) -> ModelRequest:
