@@ -1,6 +1,10 @@
 from langgraph.types import interrupt, Command
 from langchain_core.tools import tool, InjectedToolCallId
+<<<<<<< HEAD
 from langchain_core.messages import ToolMessage, AIMessage
+=======
+from langchain_core.messages import ToolMessage, RemoveMessage, HumanMessage
+>>>>>>> origin/nh/deepagent
 from langchain.tools.tool_node import InjectedState
 from langchain.agents.middleware import AgentMiddleware, ModelRequest, AgentState
 from langchain.agents.middleware.filesystem import FileData
@@ -20,7 +24,12 @@ from dotenv import load_dotenv
 from datetime import datetime
 from langgraph.runtime import get_runtime
 from langgraph.runtime import Runtime
+<<<<<<< HEAD
 from langgraph.config import get_config
+=======
+from ai_filesystem import FilesystemClient
+from langgraph.graph.message import REMOVE_ALL_MESSAGES
+>>>>>>> origin/nh/deepagent
 
 load_dotenv("../.env")
 
@@ -148,34 +157,44 @@ async def get_events_for_days(
 class EmailAgentMiddleware(AgentMiddleware):
     state_schema=EmailAgentState
 
-    def before_model(self, agent_state: EmailAgentState, runtime: Runtime) -> EmailAgentState:
-        # If the last message is a human message, make sure any dangling tool calls are cleaned up.
+    def before_agent(self, agent_state: EmailAgentState, runtime: Any) -> EmailAgentState:
+        # Before the agent runs, clean up the messages array.
         messages = agent_state["messages"]
         if not messages or len(messages) == 0:
             return
-        last_message = messages[-1]
-        if last_message.type != "human":
-            return
-        # Iterate through all AI messages and fix dangling tool calls
+        # NOTE: This message cleaning is necessary to fix an earlier introduced bug.
+        cleaned_messages = []
+        # Iterate through all of the messages, and remove any messages between AIMessages and their corresponding ToolMessages
         index = 0
         while index < len(messages):
             msg = messages[index]
+            cleaned_messages.append(msg)
+            if msg.type == "ai" and msg.tool_calls:
+                # Track how far forward we need to jump after processing this AIMessage
+                furthest_tool_message_index = index
+                for tool_call in msg.tool_calls:
+                    tool_message_index = next((i for i, m in enumerate(messages) if m.type == "tool" and m.tool_call_id == tool_call["id"]), None)
+                    if tool_message_index is not None:
+                        # This is a valid tool call! We need to remove all of the messages between the AIMessage and the ToolMessage
+                        furthest_tool_message_index = max(furthest_tool_message_index, tool_message_index)
+                        cleaned_messages.append(messages[tool_message_index])
+                index = furthest_tool_message_index + 1
+            else:
+                index += 1
+
+        # Now that we've removed any bad messages between AIMessages and their corresponding ToolMessages, we need to add any dangling tool calls
+        final_messages = []
+        for msg in cleaned_messages:
+            final_messages.append(msg)
             if msg.type == "ai" and msg.tool_calls:
                 for tool_call in msg.tool_calls:
-                    has_tool_response = any(
-                        m.type == "tool" and m.tool_call_id == tool_call["id"]
-                        for m in messages[index + 1:]
-                    )
-                    if not has_tool_response:
-                        messages.insert(
-                            index + 1,
-                            ToolMessage(
-                                content=f"Before this tool call: {tool_call['name']} could be approved by the user, a follow-up came in. Please ignore this tool call, it did not execute.",
-                                tool_call_id=tool_call["id"]
-                            )
-                        )
-            index += 1
-        return agent_state
+                    tool_message_index = next((i for i, m in enumerate(cleaned_messages) if m.type == "tool" and m.tool_call_id == tool_call["id"]), None)
+                    if tool_message_index is None:
+                        final_messages.append(ToolMessage(content=f"Before this tool call: {tool_call['name']} could be approved by the user, a follow-up came in. Please ignore this tool call, it did not execute.", tool_call_id=tool_call["id"]))
+
+        return {
+            "messages": [RemoveMessage(id=REMOVE_ALL_MESSAGES)] + final_messages
+        }
 
 
 class UIState(AgentState):
