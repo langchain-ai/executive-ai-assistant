@@ -1,10 +1,6 @@
 from langgraph.types import interrupt, Command
 from langchain_core.tools import tool, InjectedToolCallId
-<<<<<<< HEAD
 from langchain_core.messages import ToolMessage, AIMessage
-=======
-from langchain_core.messages import ToolMessage, RemoveMessage, HumanMessage
->>>>>>> origin/nh/deepagent
 from langchain.tools.tool_node import InjectedState
 from langchain.agents.middleware import AgentMiddleware, ModelRequest, AgentState
 from langchain.agents.middleware.filesystem import FileData
@@ -24,12 +20,8 @@ from dotenv import load_dotenv
 from datetime import datetime
 from langgraph.runtime import get_runtime
 from langgraph.runtime import Runtime
-<<<<<<< HEAD
 from langgraph.config import get_config
-=======
-from ai_filesystem import FilesystemClient
 from langgraph.graph.message import REMOVE_ALL_MESSAGES
->>>>>>> origin/nh/deepagent
 
 load_dotenv("../.env")
 
