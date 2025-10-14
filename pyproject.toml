@@ -7,12 +7,14 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-langgraph = "*"
+langgraph = "^1.0.0a3"
 langgraph-checkpoint = "*"
 langchain = { git = "https://github.com/langchain-ai/langchain.git", branch = "nh/subagent-middleware", subdirectory = "libs/langchain_v1" }
 langchain-auth = "*"
 langchain-openai = "^1.0.0.a4"
 langchain-anthropic = "^1.0.0.a4"
+langgraph-prebuilt = "0.7.0a2"
+langchain-core = "^1.0.0a6"
 google-api-python-client = "^2.128.0"
 google-auth-oauthlib = "^1.2.0"
 google-auth-httplib2 = "^0.2.0"
