@@ -20,7 +20,8 @@ HYDRATED_SYSTEM_PROMPT = FIND_MEETING_TIME_SYSTEM_PROMPT.format(
     full_name="Harrison Chase",
     name="Harrison",
     timezone="America/Los_Angeles",
-    schedule_preferences="By default, unless specified otherwise, you should make meetings 30 minutes long."
+    schedule_preferences="By default, unless specified otherwise, you should make meetings 30 minutes long.",
+    current_date="2025-10-13"
 )
 
 # Mock out the get_events_for_days tool
@@ -74,25 +75,6 @@ default_subagent_middleware = [
         ),
         AnthropicPromptCachingMiddleware(ttl="5m", unsupported_model_behavior="ignore"),
     ]
-
-find_meeting_time_subagent = create_agent(
-    model=ChatAnthropic(model="claude-sonnet-4-20250514"),
-    system_prompt=HYDRATED_SYSTEM_PROMPT,
-    tools=[get_events_for_days],
-    default_subagent_middleware=default_subagent_middleware,
-)
-
-class TestFindingTimes:
-
-    # Test for specific dates
-    async def test_specific_dates(self):
-        config = {"configurable": {"thread_id": uuid.uuid4()}}
-        input_state = get_input_state(
-            email={
-                "id": "123",
-            }
-        )
-
 
 DEFAULT_CONTEXT = {
     "slack_user_id": "U07LER66LDA", # Nick's Slack User ID for testing

@@ -1,16 +1,17 @@
 from langgraph.types import interrupt, Command
 from langchain_core.tools import tool, InjectedToolCallId
-from langchain_core.messages import ToolMessage, RemoveMessage, HumanMessage
+from langchain_core.messages import ToolMessage, AIMessage, RemoveMessage
 from langchain.tools.tool_node import InjectedState
 from langchain.agents.middleware import AgentMiddleware, ModelRequest, AgentState
+from langchain.agents.middleware.filesystem import FileData
 from langgraph.graph.ui import AnyUIMessage, ui_message_reducer, push_ui_message
-from deepagents import async_create_deep_agent    
+from langchain.agents.deepagents import create_deep_agent    
 from eaia.deepagent.google_utils import gmail_send_email, gmail_mark_as_read, google_calendar_list_events_for_date, google_calendar_create_event
 from eaia.deepagent.prompts import SYSTEM_PROMPT, FIND_MEETING_TIME_SYSTEM_PROMPT, INSTRUCTIONS_PROMPT
 from eaia.deepagent.types import EmailAgentState, NotifiedState, EmailConfigSchema
 from eaia.deepagent.utils import generate_email_markdown, SLACK_MSG_TEMPLATE
 from langchain_core.runnables import RunnableConfig
-from typing import Annotated, Any, Sequence, Optional
+from typing import Annotated, Any, Sequence, Callable
 from typing_extensions import TypedDict
 import json
 from slack_sdk.web.async_client import AsyncWebClient
@@ -19,7 +20,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 from langgraph.runtime import get_runtime
 from langgraph.runtime import Runtime
-from ai_filesystem import FilesystemClient
+from langgraph.config import get_config
 from langgraph.graph.message import REMOVE_ALL_MESSAGES
 
 load_dotenv("../.env")
@@ -220,7 +221,7 @@ class GenUIMiddleware(AgentMiddleware):
 
 class NotifyUserViaSlackMiddleware(AgentMiddleware):
     state_schema = NotifiedState
-    async def after_model(self, state: NotifiedState, runtime: Any) -> NotifiedState | None:
+    async def aafter_model(self, state: NotifiedState, runtime: Runtime) -> NotifiedState | None:
         messages = state["messages"]
         notified = state["notified"] if "notified" in state else False
         if not messages or notified:
@@ -254,15 +255,21 @@ class FilesystemHydratedState(AgentState):
 class WriteConfigInstructionsToFilesystemMiddleware(AgentMiddleware):
     state_schema = FilesystemHydratedState
 
-    def before_model(self, agent_state: FilesystemHydratedState, runtime: Runtime) -> AgentState:
+    async def abefore_model(self, agent_state: FilesystemHydratedState, runtime: Runtime) -> AgentState:
         # If instructions have not been written to long-term memory, write them.
         hydrated = agent_state["filesystem_hydrated"] if "filesystem_hydrated" in agent_state else False
-        if not hydrated and os.getenv("LONGTERM_FILESYSTEM_NAME") and os.getenv("AGENT_FS_API_KEY"):
-            filesystem_client = FilesystemClient(
-                filesystem=os.getenv("LONGTERM_FILESYSTEM_NAME")
-            )
-            file_data_list = filesystem_client._list_files()
-            if not any(file_data.path == "instructions.txt" for file_data in file_data_list):
+        store = runtime.store
+        if not store:
+            raise ValueError("No store found in runtime")
+        config = get_config()
+        assistant_id = config.get("metadata", {}).get("assistant_id")
+        if not assistant_id:
+            namespace = ("filesystem",)
+        else:
+            namespace = (assistant_id, "filesystem")
+        if not hydrated:
+            instructions_item = await store.aget(namespace, "/instructions.txt")
+            if not instructions_item or not instructions_item.value["content"]:
                 system_prompt = INSTRUCTIONS_PROMPT.format(
                     full_name=runtime.context.full_name,
                     name=runtime.context.name,
@@ -275,42 +282,29 @@ class WriteConfigInstructionsToFilesystemMiddleware(AgentMiddleware):
                     writing_preferences=runtime.context.writing_preferences,
                     timezone=runtime.context.timezone
                 )
-                filesystem_client.create_file(
-                    "instructions.txt",
-                    system_prompt
-                )
+                await store.aput(namespace, "/instructions.txt", FileData(content=[system_prompt], created_at=datetime.now().isoformat(), modified_at=datetime.now().isoformat()))
         return {"filesystem_hydrated": True}
 
-    def modify_model_request(self, model_request: ModelRequest, agent_state: FilesystemHydratedState) -> ModelRequest:
+    async def awrap_model_call(self, model_request: ModelRequest, handler: Callable[[ModelRequest], AIMessage]) -> ModelRequest:
         # Get instructions from long-term memory
-        if os.getenv("LONGTERM_FILESYSTEM_NAME") and os.getenv("AGENT_FS_API_KEY"):
-            filesystem_client = FilesystemClient(
-                filesystem=os.getenv("LONGTERM_FILESYSTEM_NAME")
-            )
-            instructions = filesystem_client.read_file("instructions.txt")
+        runtime = get_runtime()
+        store = runtime.store
+        if not store:
+            raise ValueError("No store found in runtime")
+        config = get_config()
+        assistant_id = config.get("metadata", {}).get("assistant_id")
+        if not assistant_id:
+            namespace = ("filesystem",)
+        else:
+            namespace = (assistant_id, "filesystem")
+        instructions_item = await store.aget(namespace, "/instructions.txt")
+        if instructions_item and instructions_item.value["content"]:
+            instructions = "\n".join(instructions_item.value["content"])
             model_request.system_prompt = SYSTEM_PROMPT.format(
                 instructions=instructions,
                 existing_system_prompt=model_request.system_prompt
             )
-        return model_request
-
-
-class AddFileToSystemPromptMiddleware(AgentMiddleware):
-    def __init__(self, files_to_inject: list[str]):
-        self.files_to_inject = files_to_inject
-
-    def modify_model_request(self, model_request: ModelRequest, agent_state: dict) -> ModelRequest:
-        if "files" not in agent_state:
-            print("No files in State - something went wrong")
-            return model_request
-        files_str = "Here are some relevant files that are accessible in your filesystem: \n\n"
-        for file in self.files_to_inject:
-            if file in agent_state["files"]:
-                files_str += f"{file}\n"
-                files_str += f"{agent_state['files'][file]}\n"
-                files_str += f"{'-'*30}\n"
-        model_request.system_prompt = model_request.system_prompt + "\n\n" + files_str
-        return model_request
+        return await handler(model_request)
 
 async def get_deepagent(config: RunnableConfig):
     configurable = config.get("configurable", {})
@@ -323,14 +317,14 @@ async def get_deepagent(config: RunnableConfig):
         schedule_preferences=graph_config.schedule_preferences,
         current_date=datetime.now().strftime("%Y-%m-%d")
     )
-    agent = async_create_deep_agent(
+    agent = create_deep_agent(
         tools=[message_user, write_email_response, start_new_email_thread, send_calendar_invite, mark_email_as_read],
-        instructions="",  # NOTE: This is populated by Middleware now,
+        system_prompt="",  # NOTE: This is populated by Middleware now,
         subagents=[
             {
                 "name": "find_meeting_times",
                 "description": "This agent is responsible for finding the best available meeting times for the user.",
-                "prompt": find_meeting_times_instructions,
+                "system_prompt": find_meeting_times_instructions,
                 "tools": [get_events_for_days],
                 "middleware": [EmailAgentMiddleware()]
             }
@@ -368,6 +362,8 @@ async def get_deepagent(config: RunnableConfig):
                 "description": "I'm looking to create a calendar invite to create a meeting. Please review it and make any necessary changes."
             }
         },
-        context_schema=EmailConfigSchema
+        context_schema=EmailConfigSchema,
+        use_longterm_memory=True,
+        is_async=True
     ).with_config({"recursion_limit": 1000})
     return agent

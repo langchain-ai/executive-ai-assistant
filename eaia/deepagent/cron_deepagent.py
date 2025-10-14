@@ -99,7 +99,11 @@ async def main(state: JobKickoff, config: RunnableConfig):
                         email_thread=email["page_content"]
                     )),
                     "files": {
-                        "email.txt": email_str
+                        "email.txt": {
+                            "content": [email_str],
+                            "created_at": email["send_time"],
+                            "modified_at": email["send_time"],
+                        }
                     },
                     "notified": False
                 },

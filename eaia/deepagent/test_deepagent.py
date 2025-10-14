@@ -18,7 +18,6 @@ async def main():
         input={},
         config={},
     )
-    print(response)
 
 if __name__ == "__main__":
     asyncio.run(main())
