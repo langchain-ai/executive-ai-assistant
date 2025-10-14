@@ -9,7 +9,7 @@ readme = "README.md"
 python = "^3.11"
 langgraph = "*"
 langgraph-checkpoint = "*"
-langchain = { path = "../../langchain_product/langchain/libs/langchain_v1", develop = true }
+langchain = { git = "https://github.com/langchain-ai/langchain.git", branch = "nh/subagent-middleware", subdirectory = "libs/langchain_v1" }
 langchain-auth = "*"
 langchain-openai = "^1.0.0.a4"
 langchain-anthropic = "^1.0.0.a4"

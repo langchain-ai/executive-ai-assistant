@@ -1611,7 +1611,7 @@ optional = false
 python-versions = ">=3.10.0,<4.0.0"
 groups = ["main"]
 files = []
-develop = true
+develop = false
 
 [package.dependencies]
 langchain-core = ">=1.0.0a7,<2.0.0"
@@ -1635,8 +1635,11 @@ together = ["langchain-together"]
 xai = ["langchain-xai"]
 
 [package.source]
-type = "directory"
-url = "../../langchain_product/langchain/libs/langchain_v1"
+type = "git"
+url = "https://github.com/langchain-ai/langchain.git"
+reference = "nh/subagent-middleware"
+resolved_reference = "ecbd43b6603b044f9b544b8f00a4e2ec591cd5dc"
+subdirectory = "libs/langchain_v1"
 
 [[package]]
 name = "langchain-anthropic"
@@ -4495,4 +4498,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "109d80ef8a4ffc26cf9928d3f5ce11bbfbe02f45c549b9f450e9778b2442eace"
+content-hash = "672e12d146e467c31a023db4cbaa422cb880739fb111fbad7bd2a66d06a85ac1"
