@@ -69,8 +69,8 @@ async def write_email_response(
     recipients = [state["email"]["from_email"]]
     if isinstance(new_recipients, str):
         new_recipients = json.loads(new_recipients)
-        if len(new_recipients) == 0:
-            recipients.extend(new_recipients)
+    if len(new_recipients) > 0:
+        recipients.extend(new_recipients)
     try:
         await gmail_send_email(
             to=",".join(recipients),
