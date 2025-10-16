@@ -683,13 +683,15 @@ files = [
 
 [[package]]
 name = "deepagents"
-version = "0.0.11"
+version = "0.0.12rc2"
 description = "General purpose 'deep agent' with sub-agent spawning, todo list capabilities, and mock file system. Built on LangGraph."
 optional = false
-python-versions = ">=3.11,<4.0"
+python-versions = "<4.0,>=3.11"
 groups = ["main"]
-files = []
-develop = false
+files = [
+    {file = "deepagents-0.0.12rc2-py3-none-any.whl", hash = "sha256:82fcea1982654b3e2b5b44c57b8d8a198e5f0307a843e7c783c70b5a2f073adb"},
+    {file = "deepagents-0.0.12rc2.tar.gz", hash = "sha256:160fdd8f01489b2c1b3043bc8f9dcf43cd5b053b87826a70731fd7010f19b261"},
+]
 
 [package.dependencies]
 langchain = ">=1.0.0a15"
@@ -700,12 +702,6 @@ langgraph-prebuilt = ">=0.7.0a2"
 
 [package.extras]
 dev = ["build", "langchain-openai", "pytest", "pytest-cov", "twine"]
-
-[package.source]
-type = "git"
-url = "https://github.com/langchain-ai/deepagents.git"
-reference = "nh/clean"
-resolved_reference = "d6e455cc340ca209954624a08d1f74228a68f7f4"
 
 [[package]]
 name = "distro"
@@ -4519,4 +4515,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "8d99f2a259b0aa4f371c2bbd9f54cd6cefceb02564432ff09318e872b7a6015f"
+content-hash = "1b58c8c07816d16788a940c6cf79de69952705562dc5eb0785a017a621bbbf5c"

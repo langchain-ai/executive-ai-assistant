@@ -344,7 +344,7 @@ async def get_deepagent(config: RunnableConfig):
                 "mark_email_as_read": {"component_name": "email_marked_as_read"}
             })
         ],
-        tool_configs={
+        interrupt_on={
             "write_email_response": {
                 "allowed_decisions": ["approve", "edit", "reject"],
                 "description": "I've written an email response to the user. Please review it and make any necessary changes."
