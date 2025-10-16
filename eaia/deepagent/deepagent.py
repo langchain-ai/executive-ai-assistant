@@ -3,12 +3,11 @@ from langchain_core.tools import tool, InjectedToolCallId
 from langchain_core.messages import ToolMessage, AIMessage, RemoveMessage
 from langchain.tools.tool_node import InjectedState
 from langchain.agents.middleware import AgentMiddleware, ModelRequest, AgentState
-from langchain.agents.middleware.filesystem import FileData
 from langgraph.graph.ui import AnyUIMessage, ui_message_reducer, push_ui_message
-from langchain.agents.deepagents import create_deep_agent    
+from deepagents import create_deep_agent
 from eaia.deepagent.google_utils import gmail_send_email, gmail_mark_as_read, google_calendar_list_events_for_date, google_calendar_create_event
 from eaia.deepagent.prompts import SYSTEM_PROMPT, FIND_MEETING_TIME_SYSTEM_PROMPT, INSTRUCTIONS_PROMPT
-from eaia.deepagent.types import EmailAgentState, NotifiedState, EmailConfigSchema
+from eaia.deepagent.types import EmailAgentState, NotifiedState, EmailConfigSchema, FileData
 from eaia.deepagent.utils import generate_email_markdown, SLACK_MSG_TEMPLATE
 from langchain_core.runnables import RunnableConfig
 from typing import Annotated, Any, Sequence, Callable
@@ -33,22 +32,25 @@ def message_user(
     tool_call_id: Annotated[str, InjectedToolCallId]
 ) -> Command:
     description = generate_email_markdown(state["email"])
-    response = interrupt(
-        [
+    response = interrupt({
+        "action_requests": [
             {
-                "action_request": {"action": "Get Clarification from User", "args": {"Question": question_for_user}},
-                "config": {
-                    "allow_respond": True,
-                    "allow_accept": False,
-                    "allow_edit": False,
-                    "description": description
+                "name": "Get Clarification from User",
+                "args": {
+                    "Question": question_for_user
                 },
                 "description": description
             }
+        ],
+        "review_configs": [
+            {
+                "action_name": "Get Clarification from User",
+                "allowed_decisions": ["reject"],
+            }
         ]
-    )[0]
-    if response["type"] == "response":
-        message = f"I asked the user what we should do, this was the response: {response['args']}"
+    })["decisions"][0]
+    if response["type"] == "reject":
+        message = f"I asked the user what we should do, this was the response: {response['message']}"
     else:
         message = "The user failed to respond to the question. Please ask again."
     return Command(
@@ -344,26 +346,19 @@ async def get_deepagent(config: RunnableConfig):
         ],
         tool_configs={
             "write_email_response": {
-                "allow_accept": True,
-                "allow_respond": True,
-                "allow_edit": True,
+                "allowed_decisions": ["approve", "edit", "reject"],
                 "description": "I've written an email response to the user. Please review it and make any necessary changes."
             },
             "start_new_email_thread": {
-                "allow_accept": True,
-                "allow_respond": True,
-                "allow_edit": True,
+                "allowed_decisions": ["approve", "edit", "reject"],
                 "description": "I've started a new email thread. Please review it and make any necessary changes."
             },
             "send_calendar_invite": {
-                "allow_accept": True,
-                "allow_respond": True,
-                "allow_edit": True,
+                "allowed_decisions": ["approve", "edit", "reject"],
                 "description": "I'm looking to create a calendar invite to create a meeting. Please review it and make any necessary changes."
             }
         },
         context_schema=EmailConfigSchema,
         use_longterm_memory=True,
-        is_async=True
     ).with_config({"recursion_limit": 1000})
     return agent

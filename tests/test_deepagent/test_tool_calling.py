@@ -26,9 +26,8 @@ class TestToolCalling:
         }
         response = await agent.ainvoke(get_input_state(email), config=CONFIG, context=DEFAULT_CONTEXT)
         assert response["__interrupt__"] is not None
-        interrupts = response["__interrupt__"][0].value
-        # NOTE: Unclear if we should just notify or write response here.
-        assert any([interrupt["action_request"]["action"] == "write_email_response" for interrupt in interrupts])
+        action_requests = response["__interrupt__"][0].value["action_requests"]
+        assert any([action_request["name"] == "write_email_response" for action_request in action_requests])
 
     async def test_write_new_email_thread(self):
         store = InMemoryStore()
@@ -45,8 +44,8 @@ class TestToolCalling:
         }
         response = await agent.ainvoke(get_input_state(email), config=CONFIG, context=DEFAULT_CONTEXT)
         assert response["__interrupt__"] is not None
-        interrupts = response["__interrupt__"][0].value
-        assert any([interrupt["action_request"]["action"] == "start_new_email_thread" for interrupt in interrupts])
+        action_requests = response["__interrupt__"][0].value["action_requests"]
+        assert any([action_request["name"] == "start_new_email_thread" for action_request in action_requests])
 
     async def test_find_and_schedule_meeting(self):
         store = InMemoryStore()

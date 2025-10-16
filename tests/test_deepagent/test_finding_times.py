@@ -61,19 +61,18 @@ async def get_events_for_days(
     return mock_events
     
 # Mock out the sub_agent
-from deepagents import PlanningMiddleware, FilesystemMiddleware
+from deepagents import FilesystemMiddleware
+from langchain.agents.middleware import TodoListMiddleware
 from langchain.agents.middleware import SummarizationMiddleware
-from langchain.agents.middleware.prompt_caching import AnthropicPromptCachingMiddleware
 
 default_subagent_middleware = [
-        PlanningMiddleware(),
+        TodoListMiddleware(),
         FilesystemMiddleware(),
         SummarizationMiddleware(
             model=ChatAnthropic(model="claude-sonnet-4-20250514"),
             max_tokens_before_summary=120000,
             messages_to_keep=20,
         ),
-        AnthropicPromptCachingMiddleware(ttl="5m", unsupported_model_behavior="ignore"),
     ]
 
 DEFAULT_CONTEXT = {

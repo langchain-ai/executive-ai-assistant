@@ -30,3 +30,16 @@ class EmailConfigSchema(BaseModel):
     triage_no: str = Field(description="A string description of types of emails that you should NOT respond to", default="")
     triage_notify: str = Field(description="A string description of types of emails that you should be notified about", default="")
     triage_respond: str = Field(description="A string description of types of emails that you SHOULD respond to", default="")
+
+
+class FileData(TypedDict):
+    """Data structure for storing file contents with metadata."""
+
+    content: list[str]
+    """Lines of the file."""
+
+    created_at: str
+    """ISO 8601 timestamp of file creation."""
+
+    modified_at: str
+    """ISO 8601 timestamp of last modification."""

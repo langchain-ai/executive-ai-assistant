@@ -311,36 +311,33 @@ const WriteEmailResponseComponent = () => {
 
     const handleSendEmail = () => {
       if (recipients == args.new_recipients && content == args.content) {
-        submit(null, { command: { resume: [
-          {
-            type: "accept",
-            args: null
-          }
-        ] } })
+        submit(null, { command: { resume: {
+          decisions: [{type: "approve"}]
+        } } })
       } else {
-        submit(null, { command: { resume: [
-          {
+        submit(null, { command: { resume: {
+          decisions: [{
             type: "edit",
-            args: {
-              action: "write_email_response",
+            edited_action: {
+              name: "write_email_response",
               args: {
                 new_recipients: recipients,
                 content
               }
             }
-          }
-        ] } })
+          }] 
+        } } })
       }
     };
 
     const handleSubmitFeedback = () => {
       const feedbackMessage = `User Feedback: ${feedback}`;
-      submit(null, { command: { resume: [
-        {
-          type: "response",
-          args: feedbackMessage
-        }
-      ] } })
+      submit(null, { command: { resume: {
+        decisions: [{
+          type: "reject",
+          message: feedbackMessage
+        }] 
+      } } })
     };
 
     const isEditable = status === "interrupted";
@@ -483,12 +480,12 @@ const MessageUserComponent = () => {
     const [response, setResponse] = React.useState<string>("");
 
     const handleSubmitResponse = () => {
-      submit(null, { command: { resume: [
-          {
-            type: "response",
-            args: response         
-          }
-        ] } })
+      submit(null, { command: { resume: {
+        decisions: [{
+          type: "reject",
+          message: response
+        }]
+      } } })
     };
 
     // Pending state - return empty component
@@ -623,11 +620,11 @@ const SendCalendarInviteComponent = () => {
     const [feedback, setFeedback] = React.useState<string>("");
 
     const handleScheduleEvent = () => {
-      submit(null, { command: { resume: [
-        {
+      submit(null, { command: { resume: {
+        decisions: [{
           type: "edit",
-          args: {
-            action: "send_calendar_invite",
+          edited_action: {
+            name: "send_calendar_invite",
             args: {
               emails,
               event_title: eventTitle,
@@ -636,19 +633,19 @@ const SendCalendarInviteComponent = () => {
               timezone
             }
           }
-        }
-      ] } })
+        }]
+      } } })
     };
 
     const handleSubmitFeedback = () => {
       const feedbackMessage = `User Feedback: ${feedback}`;
       console.log("Submitting feedback:", feedbackMessage);
-      submit(null, { command: { resume: [
-        {
-          type: "response",
-          args: feedbackMessage
-        }
-      ] } })
+      submit(null, { command: { resume: {
+        decisions: [{
+          type: "reject",
+          message: feedbackMessage
+        }]
+      } } })
     };
 
     const isEditable = status === "interrupted";
@@ -834,36 +831,35 @@ const StartNewEmailThreadComponent = () => {
 
     const handleSendEmail = () => {
       if (recipients == args.recipients && subject == args.subject && content == args.content) {
-        submit(null, { command: { resume: [
-          {
-            type: "accept",
-            args: null
-          }
-        ] } })
+        submit(null, { command: { resume: {
+          decisions: [{
+            type: "approve"
+          }]
+        } } })
       } else {
-        submit(null, { command: { resume: [
-          {
+        submit(null, { command: { resume: {
+          decisions: [{
             type: "edit",
-            args: {
-              action: "start_new_email_thread",
+            edited_action: {
+              name: "start_new_email_thread",
               args: {
                 recipients,
                 subject,
                 content
               }
             }
-          }
-        ] } })
+          }]
+        } } })
       }
     };
 
     const handleSubmitFeedback = () => {
-      submit(null, { command: { resume: [
-        {
-          type: "response",
-          args: `User Feedback: ${feedback}`
-        }
-      ] } })
+      submit(null, { command: { resume: {
+        decisions: [{
+          type: "reject",
+          message: `User Feedback: ${feedback}`
+        }]
+      } } })
     };
 
     const isEditable = status === "interrupted";

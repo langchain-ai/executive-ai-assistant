@@ -2,13 +2,12 @@ import uuid
 from langchain_core.messages import HumanMessage
 from langgraph.types import Command
 from eaia.deepagent.deepagent import get_deepagent
-from eaia.deepagent.types import EmailData
+from eaia.deepagent.types import EmailData, FileData
 from eaia.deepagent.prompts import EMAIL_INPUT_PROMPT
 from eaia.deepagent.utils import FILE_TEMPLATE
 from dotenv import load_dotenv
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.store.memory import InMemoryStore
-from langchain.agents.middleware.filesystem import FileData
 
 load_dotenv("../../.env")
 
@@ -231,10 +230,12 @@ async def assert_deep_agent_remembering(email: EmailData, human_followup: str):
     last_message = response.get("messages", [])[-1]
     assert response["__interrupt__"] is not None
     response2 = await agent.ainvoke(
-        Command(resume=[{
-            "args": human_followup,
-            "type": "response"
-        }]),
+        Command(resume={
+            "decisions": [{
+                "type": "reject",
+                "message": human_followup
+            }]
+        }),
         config=config,
         interrupt_before=["tools"]
     )

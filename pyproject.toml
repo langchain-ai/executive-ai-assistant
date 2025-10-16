@@ -9,7 +9,8 @@ readme = "README.md"
 python = "^3.11"
 langgraph = "^1.0.0a3"
 langgraph-checkpoint = "*"
-langchain = { git = "https://github.com/langchain-ai/langchain.git", branch = "nh/subagent-middleware", subdirectory = "libs/langchain_v1" }
+langchain = "^1.0.0.a15"
+deepagents = { git = "https://github.com/langchain-ai/deepagents.git", branch = "nh/clean" }
 langchain-auth = "*"
 langchain-openai = "^1.0.0.a4"
 langchain-anthropic = "^1.0.0.a4"
