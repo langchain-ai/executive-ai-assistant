@@ -113,7 +113,7 @@ const EmailThreadView: React.FC<EmailThreadViewProps> = ({ email }) => {
   if (!email) return null;
 
   return (
-    <div className="w-[40%] flex-shrink-0 border-l-2 border-gray-200 pl-4">
+    <div className="w-[40%] flex-shrink-0 border-l-2 border-gray-200 pl-4 overflow-hidden min-w-0">
       <div className="sticky top-4">
         <h3 className="text-sm font-semibold text-gray-700 mb-3 pb-2 border-b border-gray-300">Email Thread</h3>
         <div className="space-y-3 text-xs">
