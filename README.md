@@ -4,6 +4,45 @@ Executive AI Assistant (EAIA) is an AI agent that attempts to do the job of an E
 
 For a hosted version of EAIA, see documentation [here](https://mirror-feeling-d80.notion.site/How-to-hire-and-communicate-with-an-AI-Email-Assistant-177808527b17803289cad9e323d0be89?pvs=4).
 
+## 🚀 Quick Start
+
+Want to get your Gmail AI Assistant running quickly? Follow these steps:
+
+1. **Clone and install**:
+   ```bash
+   git clone <your-repo>
+   cd mail_ai_assistant
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -e .
+   ```
+
+2. **Configure API keys**: Edit `.env` with your API keys (see SETUP_GUIDE.md)
+
+3. **Configure personal settings**: Edit `eaia/main/config.yaml` with your information (see `config.yaml.example`)
+
+4. **Set up Google OAuth**: Follow steps in SETUP_GUIDE.md to get OAuth credentials
+
+5. **Run quick start**:
+   ```bash
+   ./scripts/quick_start.sh
+   ```
+
+6. **Start the server**:
+   ```bash
+   pip install -U "langgraph-cli[inmem]"
+   langgraph dev
+   ```
+
+7. **Test with emails**:
+   ```bash
+   python scripts/run_ingest.py --minutes-since 120 --rerun 1 --early 0
+   ```
+
+📖 **For detailed setup instructions, see [SETUP_GUIDE.md](./SETUP_GUIDE.md)**
+
+---
+
 Table of contents
 
 - [General Setup](#general-setup)

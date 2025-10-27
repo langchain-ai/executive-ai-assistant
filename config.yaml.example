@@ -1,0 +1,79 @@
+# Gmail AI Assistant Configuration Template
+# Copy this to eaia/main/config.yaml and customize with your information
+
+# Your Gmail address (must match OAuth credentials)
+email: your.email@gmail.com
+
+# Your name
+full_name: Your Full Name
+name: YourFirstName
+
+# Brief description of who you are and what you do
+background: |
+  I'm a software engineer working on AI and ML projects.
+  I work at XYZ Company and focus on building scalable systems.
+
+# Your timezone (e.g., PST, EST, UTC, CST)
+timezone: "PST"
+
+# Meeting scheduling preferences
+schedule_preferences: |
+  - Default meeting length: 30 minutes
+  - Preferred meeting times: 10am-4pm on weekdays
+  - Avoid scheduling meetings before 9am or after 5pm
+
+# Important context for email responses
+background_preferences: |
+  - My colleague Jane Smith handles all marketing and PR inquiries
+  - For technical questions about our product, loop in the engineering team
+  - I use Calendly for scheduling: https://calendly.com/yourname
+
+# Preferences for email content
+response_preferences: |
+  - Include my Calendly link when someone asks to schedule a meeting
+  - Keep responses brief and to the point
+  - Always confirm meeting details with date, time, and timezone
+
+# Email tone and style preferences
+rewrite_preferences: |
+  - Match the recipient's tone (formal for formal, casual for casual)
+  - Don't sound like an AI assistant, sound natural and personal
+  - For close colleagues, be casual and skip formal greetings
+  - For external contacts, maintain a professional but friendly tone
+  - Keep emails concise - aim for 3-5 sentences when possible
+
+# Guidelines for emails to IGNORE (no action needed)
+triage_no: |
+  - Automated notifications from services (GitHub, Jira, Slack digests)
+  - Cold sales emails and unsolicited vendor outreach
+  - Marketing newsletters and promotional emails
+  - Spam and bulk emails
+  - Automated calendar invitations for meetings I've already accepted
+  - Google Docs comment notifications
+  - Social media notifications
+
+# Guidelines for emails to NOTIFY me about (but don't draft a response)
+triage_notify: |
+  - Important documents shared with me (contracts, reports)
+  - Signature requests from DocuSign or similar services
+  - Time-sensitive items requiring my personal attention
+  - Technical questions about our product that I should be aware of
+  - Legal or compliance related emails
+  - Executive or board-level communications
+  - Award nominations or speaking invitations
+
+# Guidelines for emails the AI should DRAFT RESPONSES for
+triage_email: |
+  - Direct questions from colleagues or team members
+  - Meeting scheduling requests from clients or partners
+  - Follow-up emails where I'm the main point of contact
+  - Requests to introduce two people in my network
+  - Emails from people I have an existing relationship with
+  - Responses to event invitations
+  - Questions about my availability or schedule
+  - Emails where I've been CC'd and need to acknowledge
+  - Thank you emails that deserve a response
+  - Confirmations for meetings or calls
+
+# Enable learning from feedback (recommended)
+memory: true

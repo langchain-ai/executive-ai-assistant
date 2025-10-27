@@ -1,52 +1,53 @@
-email: ...
-full_name: Harrison Chase
-name: Harrison
-background: Harrison is CEO and co-founder of LangChain. LangChain is a startup building tools for developers to build LLM applications.
-schedule_preferences: By default, unless specified otherwise, you should make meetings 30 minutes long.
+email: your.email@gmail.com  # REPLACE with your Gmail address
+full_name: Your Full Name  # REPLACE with your full name
+name: YourFirstName  # REPLACE with your first name
+background: |
+  # REPLACE with a brief description of who you are and what you do.
+  # This helps the AI understand your context when drafting emails.
+  # Example: "Software engineer at XYZ Corp, working on AI and ML projects."
+schedule_preferences: |
+  # REPLACE with your meeting scheduling preferences
+  # Example: "By default, make meetings 30 minutes long. Prefer mornings 10am-12pm."
 background_preferences: |
-  LangChain has a product marketer - Linda. For emails where she may be relevant, please loop her in. If possible, just add her to the thread and let her handle any asks (not Harrison). Examples include: being asked to amplify a podcast, blogpost, or other work featuring Harrison or LangChain
-response_preferences:
-timezone: "PST"
+  # REPLACE with important context for email responses
+  # Example: "My colleague Jane handles marketing inquiries. Loop her in on press requests."
+response_preferences: |
+  # REPLACE with preferences for email content
+  # Example: "Include my Calendly link for scheduling: https://calendly.com/yourname"
+timezone: "PST"  # REPLACE with your timezone (PST, EST, UTC, etc.)
 rewrite_preferences: |
-  Harrison has a few rules for how he likes his emails to be written:
-
-  - He generally likes to match their tone. If they write formally, then so will he. If they write casually, then he should write casual
-  - If working with an assistant to schedule, then he is usually more formal
-  - If conversing with someone he seems to know well, then he is more direct and to the fact
-  - Harrison REALLY does not want anyone to know he is using an assistant, so you should try not to sound too much like an assistant and rather sound like Harrison
-  - When Harrison is casual, he generally does not include any greetings or sign offs, and just directly says his message
+  # REPLACE with your email tone and style preferences
+  # Example rules:
+  # - Match the recipient's tone (formal for formal, casual for casual)
+  # - Don't sound like an AI assistant, sound natural and personal
+  # - For casual emails, skip formal greetings and get straight to the point
+  # - For professional contacts, maintain a polite but concise tone
 
 triage_no: |
-  - Automated emails from services that are spamming Harrison
-  - Cold outreach from vendors - this happens a lot as people try to sell Harrison things. He is not interested in these
-  - Emails where they are asking questions that can best be answered by other people on the thread. \
-  Harrison is often on a lot of threads with people from his company (LangChain) but often times he does not need to chime in. \
-  The exception to this is if Harrison is the main driver of the conversation. \
-  You can usually tell this by whether Harrison was the one who sent the last email
-  - Generally do not need to see emails from Ramp, Rewatch, Stripe
-  - Notifications of comments on Google Docs
-  - Automated calendar invitations
+  # REPLACE with guidelines for emails to IGNORE (no action needed)
+  # Examples:
+  # - Automated notifications from services (GitHub, Jira, etc.)
+  # - Cold sales emails and vendor outreach
+  # - Marketing newsletters
+  # - Spam and promotional emails
+  # - Notifications you don't need (Google Doc comments, calendar reminders)
 triage_notify: |
-  - Google docs that were shared with him (do NOT notify him on comments, just net new ones)
-  - Docusign things that needs to sign. These are using from Docusign and start with "Complete with Docusign". \
-  Note: if the Docusign is already signed, you do NOT need to notify him. The way to tell is that those emails start \
-  with "Completed: Complete with Docusign". Note the "Completed". Do not notify him if "Completed", only if still needs to be completed.
-  - Anything that is pretty technically detailed about LangChain. Harrison sometimes gets asked questions about LangChain, \
-  while he may not always respond to those he likes getting notified about them
-  - Emails where there is a clear action item from Harrison based on a previous conversation, like adding people to a slack channel
+  # REPLACE with guidelines for emails to NOTIFY you about (but AI won't draft a response)
+  # Examples:
+  # - Important documents shared with you
+  # - Signature requests (DocuSign, etc.)
+  # - Time-sensitive items requiring your attention
+  # - Technical questions you want to see but might not always respond to
+  # - Action items that need your personal attention
 triage_email: |
-  - Emails from clients that explicitly ask Harrison a question
-  - Emails from clients where someone else has scheduled a meeting for Harrison, and Harrison has not already chimed in to express his excitement
-  - Emails from clients or potential customers where Harrison is the main driver of the conversation
-  - Emails from other LangChain team members that explicitly ask Harrison a question
-  - Emails where Harrison has gotten added to a thread with a customer and he hasn't yet said hello
-  - Emails where Harrison is introducing two people to each other. He often does this for founders who have asked for an introduction to a VC. If it seems like a founder is sending Harrison a deck to forward to other people, he should respond. If Harrison has already introduced the two parties, he should not respond unless they explicitly ask him a question.
-  - Email from clients where they are trying to set up a time to meet
-  - Any direct emails from Harrison's lawyers (Goodwin Law)
-  - Any direct emails related to the LangChain board
-  - Emails where LangChain is winning an award/being invited to a legitimate event
-  - Emails where it seems like Harrison has a pre-existing relationship with the sender. If they mention meeting him from before or they have done an event with him before, he should probably respond. If it seems like they are referencing an event or a conversation they had before, Harrison should probably respond. 
-  - Emails from friends - even these don't ask an explicit question, if it seems like something a good friend would respond to, Harrison should do so.
-
-  Reminder - automated calendar invites do NOT count as real emails
+  # REPLACE with guidelines for emails the AI should DRAFT RESPONSES for
+  # Examples:
+  # - Direct questions from colleagues or clients
+  # - Meeting scheduling requests
+  # - Follow-ups where you're the main point of contact
+  # - Introduction requests where you need to connect two people
+  # - Emails from people you have a relationship with
+  # - Responses to invitations or awards
+  # - Questions from your team members
+  # - Emails where you've been added to a thread and haven't responded yet
 memory: true
