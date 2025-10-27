@@ -1,7 +1,7 @@
 """Agent responsible for triaging the email, can either ignore it, try to respond, or notify user."""
 
 from langchain_core.runnables import RunnableConfig
-from langchain_openai import ChatOpenAI
+from eaia.llm_factory import get_llm
 from langchain_core.messages import RemoveMessage
 from langgraph.store.base import BaseStore
 
@@ -45,7 +45,7 @@ Subject: {subject}
 
 async def triage_input(state: State, config: RunnableConfig, store: BaseStore):
     model = config["configurable"].get("model", "gpt-4o")
-    llm = ChatOpenAI(model=model, temperature=0)
+    llm = get_llm(model=model, temperature=0)
     examples = await get_few_shot_examples(state["email"], store, config)
     prompt_config = get_config(config)
     input_message = triage_prompt.format(

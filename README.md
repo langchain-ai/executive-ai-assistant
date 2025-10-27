@@ -17,7 +17,10 @@ Want to get your Gmail AI Assistant running quickly? Follow these steps:
    pip install -e .
    ```
 
-2. **Configure API keys**: Edit `.env` with your API keys (see SETUP_GUIDE.md)
+2. **Configure API keys**: Edit `.env` with your API keys
+   - Get a free Gemini API key: https://aistudio.google.com/app/apikey
+   - Set `LLM_PROVIDER=gemini` and `GOOGLE_API_KEY=your_key`
+   - (See SETUP_GUIDE.md for OpenAI/Anthropic alternatives)
 
 3. **Configure personal settings**: Edit `eaia/main/config.yaml` with your information (see `config.yaml.example`)
 

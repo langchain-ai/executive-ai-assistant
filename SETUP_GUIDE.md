@@ -6,8 +6,9 @@ This guide will help you set up your personal Gmail AI Assistant.
 
 - Python 3.11 or 3.12
 - A Gmail account
-- OpenAI API account
-- Anthropic API account (optional, for reflection features)
+- **Google Gemini API key** (recommended - free tier available!)
+  - OR OpenAI API key
+  - OR Anthropic API key
 - LangSmith account (for monitoring)
 
 ## Step-by-Step Setup
@@ -28,16 +29,34 @@ pip install -e .
 Edit the `.env` file and add your API keys:
 
 ```bash
-# Required API Keys:
+# Required:
 LANGSMITH_API_KEY=your_langsmith_api_key_here
-OPENAI_API_KEY=your_openai_api_key_here
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
+
+# Choose your LLM provider (gemini is recommended):
+LLM_PROVIDER=gemini
+GOOGLE_API_KEY=your_gemini_api_key_here
+
+# Optional - only if using OpenAI or Anthropic:
+# LLM_PROVIDER=openai
+# OPENAI_API_KEY=your_openai_api_key_here
+#
+# LLM_PROVIDER=anthropic
+# ANTHROPIC_API_KEY=your_anthropic_api_key_here
 ```
 
 **Where to get API keys:**
 - **LangSmith**: https://smith.langchain.com/settings
-- **OpenAI**: https://platform.openai.com/api-keys
-- **Anthropic**: https://console.anthropic.com/settings/keys
+- **Google Gemini** (recommended): https://aistudio.google.com/app/apikey
+  - Free tier: 15 requests/minute, 1500 requests/day
+  - Gemini 1.5 Pro and Flash models available
+- **OpenAI** (alternative): https://platform.openai.com/api-keys
+- **Anthropic** (alternative): https://console.anthropic.com/settings/keys
+
+**Why Gemini?**
+- Free tier is generous for personal use
+- Excellent quality (Gemini 1.5 Pro rivals GPT-4)
+- Fast response times
+- Supports all the features needed for the assistant
 
 Then load them:
 ```bash
@@ -205,8 +224,9 @@ For continuous operation, deploy to LangGraph Platform:
 3. Click "New Deployment"
 4. Connect to your GitHub repo
 5. Add environment variables:
-   - `OPENAI_API_KEY`
-   - `ANTHROPIC_API_KEY`
+   - `LLM_PROVIDER=gemini`
+   - `GOOGLE_API_KEY` (or your chosen provider's key)
+   - Optional: `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` if using those providers
 6. Click "Submit" and wait for deployment
 
 #### 7.3 Set Up Cron Job
@@ -259,6 +279,26 @@ If using a personal Gmail (non-Workspace):
 - Verify all API keys are set in `.env`
 - Make sure to run `source .env` or export variables manually
 - Check that keys are valid and have sufficient quota
+- If using Gemini, the key can be either `GOOGLE_API_KEY` or `GEMINI_API_KEY`
+- Make sure `LLM_PROVIDER` is set correctly (gemini/openai/anthropic)
+
+### Switching LLM Providers
+
+You can easily switch between providers by changing the `LLM_PROVIDER` environment variable:
+
+```bash
+# Use Google Gemini (recommended)
+export LLM_PROVIDER=gemini
+export GOOGLE_API_KEY=your_key
+
+# Use OpenAI
+export LLM_PROVIDER=openai
+export OPENAI_API_KEY=your_key
+
+# Use Anthropic Claude
+export LLM_PROVIDER=anthropic
+export ANTHROPIC_API_KEY=your_key
+```
 
 ## Next Steps
 
