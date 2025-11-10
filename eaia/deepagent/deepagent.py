@@ -2,7 +2,7 @@ from langgraph.types import interrupt, Command
 from langchain_core.tools import tool, InjectedToolCallId
 from langchain_core.messages import ToolMessage, AIMessage, RemoveMessage
 from langchain.tools.tool_node import InjectedState
-from langchain.agents.middleware import AgentMiddleware, ModelRequest, AgentState
+from langchain.agents.middleware import AgentMiddleware, ModelRequest, AgentState, ModelFallbackMiddleware
 from langgraph.graph.ui import AnyUIMessage, ui_message_reducer, push_ui_message
 from deepagents import create_deep_agent
 from eaia.deepagent.google_utils import gmail_send_email, gmail_mark_as_read, google_calendar_list_events_for_date, google_calendar_create_event
@@ -342,7 +342,10 @@ async def get_deepagent(config: RunnableConfig):
                 "get_events_for_days": {"component_name": "get_events_for_days"},
                 "message_user": {"component_name": "message_user"},
                 "mark_email_as_read": {"component_name": "email_marked_as_read"}
-            })
+            }),
+            ModelFallbackMiddleware(
+                first_model="gpt-5",
+            )
         ],
         interrupt_on={
             "write_email_response": {
