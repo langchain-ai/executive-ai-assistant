@@ -36,7 +36,6 @@ async def get_credentials(user_email: str):
         provider="google-langsmith-prod",
         scopes=_SCOPES,
         user_id=user_email,
-        agent_scoped=False
     )
     from google.oauth2.credentials import Credentials
     return Credentials(auth_result.token)
