@@ -8,9 +8,13 @@ import httpx
 import langsmith as ls
 from langgraph.graph import END, START, StateGraph
 from langgraph_sdk import get_client
-
-from eaia.gmail import fetch_group_emails
-from eaia.main.config import get_config
+from langchain_core.runnables import RunnableConfig
+from langchain_core.messages import HumanMessage
+from eaia.deepagent.prompts import EMAIL_INPUT_PROMPT
+from eaia.deepagent.google_utils import fetch_group_emails
+from eaia.deepagent.utils import FILE_TEMPLATE
+from dotenv import load_dotenv
+load_dotenv("../.env")
 
 client = get_client()
 
@@ -21,14 +25,21 @@ class JobKickoff(TypedDict):
     count: Annotated[int, operator.add]
 
 
-async def main(state: JobKickoff, config):
+async def main(state: JobKickoff, config: RunnableConfig):
     minutes_since: int = state["minutes_since"]
-    email = get_config(config)["email"]
     assistant_id = state["assistant_id"]
-    # TODO: This really should be async
+    try:
+        assistant = await client.assistants.get(assistant_id)
+    except httpx.HTTPStatusError as e:
+        raise e
+    assistant_config = assistant["config"]["configurable"]
+    user_email = assistant_config["email"]
+    if not user_email:
+        raise ValueError("Email is not set in the assistant config")
     count = 0
-    for email in fetch_group_emails(
-        email, minutes_since=minutes_since, assistant_id=assistant_id
+    async for email in fetch_group_emails(
+        user_email,
+        minutes_since=minutes_since,
     ):
         thread_id = str(
             uuid.UUID(hex=hashlib.md5(email["thread_id"].encode("UTF-8")).hexdigest())
@@ -36,7 +47,7 @@ async def main(state: JobKickoff, config):
         async with ls.trace(
             "Schedule processing",
             inputs={"thread_id": thread_id},
-            metadata={"assistant_id": assistant_id, "email": email},
+            metadata={"email": email},
         ) as rt:
             try:
                 thread_info = await client.threads.get(thread_id)
@@ -58,22 +69,49 @@ async def main(state: JobKickoff, config):
                 continue
             recent_email = thread_info["metadata"].get("email_id")
             if recent_email == email["id"]:
+                print(f"Duplicate email: {email}")
                 rt.metadata["end_reason"] = "duplicate"
-                break
+                # continue
             await client.threads.update(thread_id, metadata={"email_id": email["id"]})
             rt.metadata["end_reason"] = "success"
             rt.add_outputs({"email": email})
             count += 1
+
+            # Pass in email through the filesystem as well as state
+            email_str = FILE_TEMPLATE.format(
+                id=email["id"],
+                thread_id=email["thread_id"],
+                send_time=email["send_time"],
+                subject=email["subject"],
+                to=email["to_email"],
+                _from=email["from_email"],
+                page_content=email["page_content"],
+            )
             await client.runs.create(
                 thread_id,
                 assistant_id,
-                input={"email": email},
+                input={
+                    "email": email,
+                    "messages": HumanMessage(content=EMAIL_INPUT_PROMPT.format(
+                        author=email["from_email"],
+                        to=email["to_email"],
+                        subject=email["subject"],
+                        email_thread=email["page_content"]
+                    )),
+                    "files": {
+                        "email.txt": {
+                            "content": [email_str],
+                            "created_at": email["send_time"],
+                            "modified_at": email["send_time"],
+                        }
+                    },
+                    "notified": False
+                },
                 multitask_strategy="rollback",
-                config={"configurable": {"email": email["to_email"]}},
+                config={**assistant_config, "recursion_limit": 1000},
             )
 
     return {"count": count}
-
 
 graph = StateGraph(JobKickoff)
 graph.add_node(main)

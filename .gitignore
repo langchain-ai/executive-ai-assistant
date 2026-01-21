@@ -160,3 +160,5 @@ cython_debug/
 
 # Secrets for Google Workspace (Gmail, GCal)
 .secrets/
+
+node_modules/
