@@ -34,7 +34,7 @@ ipykernel = "^6.29.4"
 pytest-asyncio = "^0.23.6"
 pytest = "^8.2.0"
 pytest-watch = "^4.2.0"
-vcrpy = "^6.0.1"
+vcrpy = "^8.1.1"
 langgraph-cli = "^0.3.8"
 
 [build-system]
