@@ -12,15 +12,15 @@ langgraph-checkpoint = "^2.0.0"
 langchain = "^0.3.9"
 langchain-openai = "^0.2"
 langchain-anthropic = "^0.3"
-google-api-python-client = "^2.128.0"
-langchain-auth = "^0.1.2"
-langgraph-sdk = "^0.2"
-langsmith = "^0.3.45"
+google-api-python-client = "^2.190.0"
+langchain-auth = "^0.2.0"
+langgraph-sdk = "^0.3"
+langsmith = "^0.7.6"
 pytz = "*"
 pyyaml = "*"
 python-dateutil = "^2.9.0.post0"
-python-dotenv = "^1.0.1"
-langgraph-cli = {extras = ["inmem"], version = "^0.3.6"}
+python-dotenv = "^1.2.1"
+langgraph-cli = {extras = ["inmem"], version = "^0.3.8"}
 langgraph-api = "^0.2.134"
 
 [tool.setuptools.packages.find]
@@ -35,7 +35,7 @@ pytest-asyncio = "^0.23.6"
 pytest = "^8.2.0"
 pytest-watch = "^4.2.0"
 vcrpy = "^6.0.1"
-langgraph-cli = "^0.3.6"
+langgraph-cli = "^0.3.8"
 
 [build-system]
 requires = ["poetry-core"]
