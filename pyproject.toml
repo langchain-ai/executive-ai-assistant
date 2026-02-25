@@ -6,7 +6,8 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "langgraph>=0.4.5",
-    "langgraph-checkpoint>=2.0.0",
+    # CVE-2025-64439: langgraph-checkpoint < 3.0.0 RCE in JsonPlusSerializer
+    "langgraph-checkpoint>=3.0.1,<5.0.0",
     "langchain>=0.3.9",
     "langchain-openai>=0.2",
     "langchain-anthropic>=0.3",
@@ -18,8 +19,9 @@ dependencies = [
     "pyyaml",
     "python-dateutil>=2.9.0.post0",
     "python-dotenv>=1.2.1",
-    "langgraph-cli[inmem]>=0.3.8",
-    "langgraph-api>=0.2.134",
+    # langgraph-api >=0.7.0 required to allow cryptography >=46.0.5 (see constraint below)
+    "langgraph-cli[inmem]>=0.4.0",
+    "langgraph-api>=0.7.0",
 ]
 
 [dependency-groups]
@@ -29,7 +31,26 @@ dev = [
     "pytest>=8.2.0",
     "pytest-watch>=4.2.0",
     "vcrpy>=6.0.1",
-    "langgraph-cli>=0.3.8",
+    "langgraph-cli>=0.4.0",
+]
+
+[tool.uv]
+constraint-dependencies = [
+    # CVE-2025-43859: h11 < 0.16.0 accepts malformed chunked-encoding bodies (critical)
+    "h11>=0.16.0",
+    # CVE-2025-68664 (critical), CVE-2025-65106 (high): langchain-core serialization injection + template injection
+    "langchain-core>=0.3.81",
+    # CVE-2024-52804, CVE-2025-47287: tornado HTTP cookie parsing DoS + multipart logging DoS
+    "tornado>=6.5",
+    # CVE-2025-4565, CVE-2026-0994: protobuf DoS vulnerabilities
+    "protobuf>=5.29.6",
+    # CVE-2025-62727: starlette Range header O(n^2) DoS
+    "starlette>=0.49.1",
+    # CVE-2025-66418, CVE-2025-66471, CVE-2026-21441: urllib3 decompression-bomb and redirect vulnerabilities
+    "urllib3>=2.6.3",
+    # CVE-2026-26007: cryptography subgroup attack on SECT curves
+    # langgraph-api >=0.7.0 allows cryptography <47.0, which covers 46.0.5
+    "cryptography>=46.0.5",
 ]
 
 [build-system]

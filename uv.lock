@@ -6,6 +6,17 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 
+[manifest]
+constraints = [
+    { name = "cryptography", specifier = ">=46.0.5" },
+    { name = "h11", specifier = ">=0.16.0" },
+    { name = "langchain-core", specifier = ">=0.3.81" },
+    { name = "protobuf", specifier = ">=5.29.6" },
+    { name = "starlette", specifier = ">=0.49.1" },
+    { name = "tornado", specifier = ">=6.5" },
+    { name = "urllib3", specifier = ">=2.6.3" },
+]
+
 [[package]]
 name = "annotated-types"
 version = "0.7.0"
@@ -399,9 +410,9 @@ requires-dist = [
     { name = "langchain-auth", specifier = ">=0.2.0" },
     { name = "langchain-openai", specifier = ">=0.2" },
     { name = "langgraph", specifier = ">=0.4.5" },
-    { name = "langgraph-api", specifier = ">=0.2.134" },
-    { name = "langgraph-checkpoint", specifier = ">=2.0.0" },
-    { name = "langgraph-cli", extras = ["inmem"], specifier = ">=0.3.8" },
+    { name = "langgraph-api", specifier = ">=0.7.0" },
+    { name = "langgraph-checkpoint", specifier = ">=3.0.1,<5.0.0" },
+    { name = "langgraph-cli", extras = ["inmem"], specifier = ">=0.4.0" },
     { name = "langgraph-sdk", specifier = ">=0.3" },
     { name = "langsmith", specifier = ">=0.7.6" },
     { name = "python-dateutil", specifier = ">=2.9.0.post0" },
@@ -413,7 +424,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "ipykernel", specifier = ">=6.29.4" },
-    { name = "langgraph-cli", specifier = ">=0.3.8" },
+    { name = "langgraph-cli", specifier = ">=0.4.0" },
     { name = "pytest", specifier = ">=8.2.0" },
     { name = "pytest-asyncio", specifier = ">=0.23.6" },
     { name = "pytest-watch", specifier = ">=4.2.0" },
