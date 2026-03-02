@@ -89,7 +89,7 @@ rerun ones it has seen before (`--rerun 1`). It will run against the local insta
 
 ### Set up Agent Inbox with Local EAIA
 
-After we have [run it locally](#run-locally), we can interract with any results.
+After we have [run it locally](#run-locally), we can interact with any results.
 
 1. Go to [Agent Inbox](https://dev.agentinbox.ai/)
 2. Connect this to your locally running EAIA agent:
@@ -101,7 +101,7 @@ After we have [run it locally](#run-locally), we can interract with any results.
       3. Give it a name like `Local EAIA`
       4. Press `Submit`
 
-You can now interract with EAIA in the Agent Inbox.
+You can now interact with EAIA in the Agent Inbox.
 
 ## Run in production (LangGraph Platform)
 
@@ -138,7 +138,7 @@ rerun ones it has seen before (`--rerun 1`). It will run against the prod instan
 
 ### Set up Agent Inbox with LangGraph Platform EAIA
 
-After we have [deployed it](#set-up-eaia-on-langgraph-platform), we can interract with any results.
+After we have [deployed it](#set-up-eaia-on-langgraph-platform), we can interact with any results.
 
 1. Go to [Agent Inbox](https://dev.agentinbox.ai/)
 2. Connect this to your locally running EAIA agent:
