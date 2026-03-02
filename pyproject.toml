@@ -30,7 +30,7 @@ where = ["src"]
 customer_support = ["*.txt", "*.rst"]
 
 [tool.poetry.group.dev.dependencies]
-ipykernel = "^6.29.4"
+ipykernel = "^7.2.0"
 pytest-asyncio = "^0.23.6"
 pytest = "^8.4.2"
 pytest-watch = "^4.2.0"
